@@ -1,0 +1,8 @@
+WIDTH=202
+HEIGHT=15
+ENTRY=0,0
+EXIT=19,12
+OUTPUT_FILE=maze.txt
+PERFECT=True
+
+# hola
