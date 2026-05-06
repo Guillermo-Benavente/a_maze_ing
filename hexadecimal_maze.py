@@ -9,6 +9,13 @@ class NodeType(Enum):
     EXIT = 3
     FORTY_TWO = 4
 
+class LimitType(Enum):
+    NONE = 0
+    NORTH = 1
+    EAST = 2
+    SOUTH = 3
+    WEST = 4
+
 class Direction():
     north: bool
     east: bool
@@ -38,7 +45,8 @@ class Direction():
 class Node():
     value: str
     position: tuple[int, int]
-    type_node: NodeType
+    type_node: list[NodeType]
+    limit_type: list[LimitType]
     limits: Direction
 
     def __init__(
@@ -48,8 +56,9 @@ class Node():
         direction: Direction
     ) -> None:
         self.position = position
-        self.type_node = type_node
+        self.type_node = [type_node]
         self.limits = direction
+        self.limit_type = [LimitType.NONE]
         self.generate_values()
 
     def generate_values(self) -> None:
@@ -77,60 +86,111 @@ class Maze():
         self._create_maze()
 
     def _create_maze(self) -> None:
+        posibilities: list[int] = range(32)
+
         if self.data.WIDTH < 7 or self.data.HEIGHT < 5:
             raise Exception("size too small")
         self._create_forty_two()
-        self._create_limits()
-        self._create_walls()
-
-    def _create_walls(self):
-        pos: list[int] = range(32)
+        for height in range(self.data.HEIGHT):
+            for width in range(self.data.WIDTH):
+                self._create_limits(height, width)
+                self._search_inout(height, width)
+                self._create_walls(height, width, posibilities)
+        #self._join_walls()
+        
+    def _join_walls(self):
         for height in range(self.data.HEIGHT):
             for width in range(self.data.WIDTH):
                 node: Node = self.maze[height][width]
-                if node.type_node != NodeType.FORTY_TWO:
-                    direction = Direction()
-                    value: int = choice(pos)
-                    walls: str = f"{value % 8:04b}"
-                    if node.type_node == NodeType.LIMIT:
-                        direction.north = (bool(int(walls[0])) or node.limits.north)
-                        direction.east = (bool(int(walls[1])) or node.limits.east)
-                        direction.south = (bool(int(walls[2])) or node.limits.south)
-                        direction.west = (bool(int(walls[3])) or node.limits.west)
-                    else:
-                        direction.north = bool(int(walls[0]))
-                        direction.east = bool(int(walls[1]))
-                        direction.south = bool(int(walls[2]))
-                        direction.west = bool(int(walls[3]))
-                    node.limits = direction
-                    node.generate_values()
+                if NodeType.FORTY_TWO not in node.type_node:
+                    if LimitType.NORTH not in node.limit_type:
+                        north: Node = self.maze[height - 1][width]
+                        north.limits.north = node.limits.south
+                        north.generate_values()
 
+                    if LimitType.EAST not in node.limit_type:
+                        east: Node = self.maze[height][width + 1]
+                        east.limits.east = node.limits.west
+                        east.generate_values()
 
-    def _create_limits(self) -> None:
-        for height in range(self.data.HEIGHT):
-            for width in range(self.data.WIDTH):
-                if (
-                    height == 0 or
-                    width == 0 or
-                    height == self.data.HEIGHT - 1 or
-                    width == self.data.WIDTH - 1
-                ):
-                    direction = Direction()
-                    if height == 0:
-                        direction.north = True
-                    if width == 0:
-                        direction.west = True
-                    if height == self.data.HEIGHT - 1:
-                        direction.south = True
-                    if width == self.data.WIDTH - 1:
-                        direction.east = True
-                    self.maze[height][width].type_node = NodeType.LIMIT
-                    self.maze[height][width].limits = direction
-                    self.maze[height][width].generate_values()
+                    if LimitType.SOUTH not in node.limit_type:
+                        south: Node = self.maze[height + 1][width]
+                        south.limits.south = node.limits.north
+                        south.generate_values()
+
+                    if LimitType.WEST not in node.limit_type:
+                        west: Node = self.maze[height][width - 1]
+                        west.limits.west = node.limits.east
+                        west.generate_values()
+
+    def _create_walls(self, height: int, width: int, posibilities: list[int]):
+        node: Node = self.maze[height][width]
+
+        if NodeType.FORTY_TWO not in node.type_node:
+            direction = Direction()
+            value: int = choice(posibilities)
+            walls: str = f"{value % 8:04b}"
+
+            if NodeType.LIMIT in node.type_node:
+                direction.north = (bool(int(walls[0])) or node.limits.north)
+                direction.east = (bool(int(walls[1])) or node.limits.east)
+                direction.south = (bool(int(walls[2])) or node.limits.south)
+                direction.west = (bool(int(walls[3])) or node.limits.west)
+            else:
+                direction.north = bool(int(walls[0]))
+                direction.east = bool(int(walls[1]))
+                direction.south = bool(int(walls[2]))
+                direction.west = bool(int(walls[3]))
+            node.limits = direction
+            node.generate_values()
+
+    def _search_inout(self, height: int, width: int):
+        if (
+            self.data.ENTRY[0] == width and
+            self.data.ENTRY[1] == height
+        ):
+            self.maze[height][width].type_node.append(NodeType.ENTRY)
+        elif (
+            self.data.EXIT[0] == width and
+            self.data.EXIT[1] == height
+        ):
+            self.maze[height][width].type_node.append(NodeType.EXIT)
+
+    def _create_limits(self, height: int, width: int) -> None:
+        node: Node = self.maze[height][width]
+
+        if (
+            height == 0 or
+            width == 0 or
+            height == self.data.HEIGHT - 1 or
+            width == self.data.WIDTH - 1
+        ):
+            direction = Direction()
+            
+            node.limit_type = []
+            if height == 0:
+                direction.north = True
+                node.limit_type.append(LimitType.NORTH)
+            if width == 0:
+                direction.west = True
+                node.limit_type.append(LimitType.WEST)
+            if height == self.data.HEIGHT - 1:
+                direction.south = True
+                node.limit_type.append(LimitType.SOUTH)
+            if width == self.data.WIDTH - 1:
+                direction.east = True
+                node.limit_type.append(LimitType.EAST)
+            if NodeType.FORTY_TWO not in node.type_node:
+                node.type_node = [NodeType.LIMIT]
+                node.limits = direction
+                node.generate_values()
+            else:
+                node.type_node.append(NodeType.LIMIT)
 
     def _create_forty_two(self) -> None:
         height: int = (self.data.HEIGHT // 2) - 2
         width: int = (self.data.WIDTH // 2) - 3
+
         for i in range(5):
             for j in range(7):
                 if (
@@ -141,8 +201,9 @@ class Maze():
                     not (i == 4 and (j == 0 or j == 1))
                 ):
                     direction: Direction = Direction()
+
                     direction.all()
-                    self.maze[height + i][width + j].type_node = NodeType.FORTY_TWO
+                    self.maze[height + i][width + j].type_node = [NodeType.FORTY_TWO]
                     self.maze[height + i][width + j].limits = direction
                     self.maze[height + i][width + j].generate_values()
     
@@ -151,3 +212,47 @@ class Maze():
             for width in range(self.data.WIDTH):
                 print(self.maze[height][width].value, end="")
             print()
+    
+    def view_maze_ascii(self) -> None:
+        for height in range(self.data.HEIGHT):
+            line_n = "" # Fila para techos (Norte)
+            line_c = "" # Fila para centros (Oeste, contenido, Este)
+            line_s = "" # Fila para suelos (Sur)
+            
+            for width in range(self.data.WIDTH):
+                node = self.maze[height][width]
+                val_hex = node.value
+                val_int = int(val_hex, 16)
+                
+                # Bits: N=8, E=4, S=2, W=1
+                n = bool(val_int & 8)
+                e = bool(val_int & 4)
+                s = bool(val_int & 2)
+                w = bool(val_int & 1)
+                
+                # 1. Construcción del Techo (Norte)
+                line_n += "+" + ("---" if n else "   ") + "+"
+                
+                # 2. Construcción del Centro (Oeste, Valor/Tipo, Este)
+                char_w = "|" if w else " "
+                char_e = "|" if e else " "
+                
+                # Identificación por tipo de nodo
+                if NodeType.ENTRY in node.type_node:
+                    content = f"({val_hex})"
+                elif NodeType.EXIT in node.type_node:
+                    content = f"[{val_hex}]"
+                elif NodeType.FORTY_TWO in node.type_node:
+                    content = " 42"
+                else:
+                    content = f" {val_hex} "
+                
+                line_c += char_w + content + char_e
+                
+                # 3. Construcción del Suelo (Sur)
+                line_s += "+" + ("---" if s else "   ") + "+"
+
+            # Imprimimos las tres líneas del bloque de celdas
+            print(line_n)
+            print(line_c)
+            print(line_s)
