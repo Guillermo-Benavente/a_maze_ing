@@ -8,7 +8,6 @@ if __name__ == "__main__":
     try:
         data = Data.model_validate(lector("config.txt"))
         maze = Maze(data)
-        maze.create_maze()
         maze.view_maze()
     except (ValidationError, ValueError, AssertionError, PermissionError) as e:
         if isinstance(e, ValidationError):
