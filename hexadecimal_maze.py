@@ -62,12 +62,16 @@ class Node():
         self.generate_values()
 
     def generate_values(self) -> None:
-        north: str = '1' if self.limits.north else '0'
-        east: str = '1' if self.limits.east else '0'
-        south: str = '1' if self.limits.south else '0'
-        west: str = '1' if self.limits.west else '0'
-        bits: str = north + east + south + west
-        self.value = f"{int(bits, 2):x}".upper()
+        bits: int = 0
+        if self.limits.north:
+            bits |= 8
+        if self.limits.east:
+            bits |= 4
+        if self.limits.south:
+            bits |= 2
+        if self.limits.west:
+            bits |= 1
+        self.value = f"{bits:x}".upper()
 
 
 class Maze():
@@ -96,32 +100,62 @@ class Maze():
                 self._create_limits(height, width)
                 self._search_inout(height, width)
                 self._create_walls(height, width, posibilities)
-        #self._join_walls()
+        self._join_walls()
         
     def _join_walls(self):
         for height in range(self.data.HEIGHT):
             for width in range(self.data.WIDTH):
                 node: Node = self.maze[height][width]
-                if NodeType.FORTY_TWO not in node.type_node:
-                    if LimitType.NORTH not in node.limit_type:
-                        north: Node = self.maze[height - 1][width]
-                        north.limits.north = node.limits.south
-                        north.generate_values()
+                if LimitType.EAST not in node.limit_type:
+                    east: Node = self.maze[height][width + 1]
+                    if NodeType.FORTY_TWO in east.type_node:
+                        node.limits.east = east.limits.west
+                    else:
+                        east.limits.west = node.limits.east
+                    east.generate_values()
+                if LimitType.SOUTH not in node.limit_type:
+                    south: Node = self.maze[height + 1][width]
+                    if NodeType.FORTY_TWO in south.type_node:
+                        node.limits.south = south.limits.north
+                    else:
+                        south.limits.north = node.limits.south
+                    south.generate_values()
+                node.generate_values()
+                if node.value == 'F' and NodeType.FORTY_TWO not in node.type_node:
+                    self._break_random_wall(height, width)
 
-                    if LimitType.EAST not in node.limit_type:
-                        east: Node = self.maze[height][width + 1]
-                        east.limits.east = node.limits.west
-                        east.generate_values()
+    def _break_random_wall(self, h: int, w: int):
+        node = self.maze[h][w]
+        possible_to_break = []
+        if h > 0 and NodeType.FORTY_TWO not in self.maze[h-1][w].type_node:
+            possible_to_break.append("north")
+        if h < self.data.HEIGHT - 1 and NodeType.FORTY_TWO not in self.maze[h+1][w].type_node:
+            possible_to_break.append("south")
+        if w < self.data.WIDTH - 1 and NodeType.FORTY_TWO not in self.maze[h][w+1].type_node:
+            possible_to_break.append("east")
+        if w > 0 and NodeType.FORTY_TWO not in self.maze[h][w-1].type_node:
+            possible_to_break.append("west")
 
-                    if LimitType.SOUTH not in node.limit_type:
-                        south: Node = self.maze[height + 1][width]
-                        south.limits.south = node.limits.north
-                        south.generate_values()
-
-                    if LimitType.WEST not in node.limit_type:
-                        west: Node = self.maze[height][width - 1]
-                        west.limits.west = node.limits.east
-                        west.generate_values()
+        if possible_to_break:
+            chosen = choice(possible_to_break)
+            if chosen == "north":
+                node.limits.north = False
+                self.maze[h-1][w].limits.south = False
+                self.maze[h-1][w].generate_values()
+            elif chosen == "south":
+                node.limits.south = False
+                self.maze[h+1][w].limits.north = False
+                self.maze[h+1][w].generate_values()
+            elif chosen == "east":
+                node.limits.east = False
+                self.maze[h][w+1].limits.west = False
+                self.maze[h][w+1].generate_values()
+            elif chosen == "west":
+                node.limits.west = False
+                self.maze[h][w-1].limits.east = False
+                self.maze[h][w-1].generate_values()
+            
+            node.generate_values()
 
     def _create_walls(self, height: int, width: int, posibilities: list[int]):
         node: Node = self.maze[height][width]
