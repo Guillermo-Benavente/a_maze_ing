@@ -1,7 +1,6 @@
 from enum import Enum, auto
 
 class CellType(Enum):
-    NORMAL = auto()
     LIMIT = auto()
     ENTRY = auto()
     EXIT = auto()
