@@ -1,13 +1,14 @@
-from typing import Callable, Any
+from typing import Callable, Any, Generator
+from time import sleep
 
 
-def operate(num: int, thinks: tuple[str, int, int],
+def operate(num: int, thinks: tuple[tuple[str, int, int], int],
             order: list[tuple[str, int, int]]
-            ) -> tuple[int, list[tuple[str, int, int]]]:
-    if num % 10 == 0:
-        order.append(thinks)
-    num //= 10
-    return (num, order)
+            ) -> list[tuple[str, int, int]]:
+    values, bit = thinks
+    if not (num >> bit) & 1:
+        order.append(values)
+    return order
 
 
 def found_all(maps: list[list[str]], enter: tuple[int, int],
@@ -15,29 +16,14 @@ def found_all(maps: list[list[str]], enter: tuple[int, int],
     texts: list[str] = []
     enx, eny = enter
     exix, exiy = exits
-    visited = set()
-    dictionary: dict[str, int] = {
-        "0": 0,
-        "1": 1,
-        "2": 10,
-        "3": 11,
-        "4": 100,
-        "5": 101,
-        "6": 110,
-        "7": 111,
-        "8": 1000,
-        "9": 1001,
-        "A": 1010,
-        "B": 1011,
-        "C": 1100,
-        "D": 1101,
-        "E": 1110,
-        "F": 1111
-    }
+    dictionary: dict[str, int] = {c: int(c, 16) for c in "0123456789ABCDEF"}
+    dirs = [(('N', 0, -1), (0)), (('E', 1, 0), (1)), (('S', 0, 1), (2)), (('W', -1, 0), (3))]
 
     def algoritm(text: str = "", x: int = enx, y: int = eny,
-                 prex: int = -10, prey: int = -10) -> None:
+                 visited: set = set()) -> Generator[str, None, None]:
         order: list[tuple[str, int, int]] = []
+        if len(text) != 0:
+            yield text
         if x == exix and y == exiy:
             texts.append(text)
             return
@@ -45,13 +31,10 @@ def found_all(maps: list[list[str]], enter: tuple[int, int],
             return
         visited.add((x, y))
         num = dictionary[maps[y][x]]
-        num, order = operate(num, ("N", 0, -1), order)
-        num, order = operate(num, ("E", 1, 0), order)
-        num, order = operate(num, ("S", 0, 1), order)
-        num, order = operate(num, ("W", -1, 0), order)
+        for i in range(len(dirs)):
+            order = operate(num, dirs[i], order)
         for te, xx, yy in order:
-            algoritm(text + te, x + xx, y + yy, x, y)
-        visited.remove((x, y))
+            yield from algoritm(text + te, x + xx, y + yy, visited)
 
     def lista() -> str:
         sol = sorted(texts, key=lambda x: len(x))
@@ -90,5 +73,6 @@ C545545456C54555545444556"""
     for i in fil:
         mapa.append(list(i))
     alle = found_all(mapa, (1, 1), (19, 14))
-    alle["algoritm"]()
+    for j in alle["algoritm"]():
+        print(j)
     print(alle["list"]())
