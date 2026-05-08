@@ -9,24 +9,35 @@
 #  flake8 . & mypy . --strict
 
 
+NAME    = libmlx.so
+LOCAL   = $(HOME)/.local
+# Add local paths to environment variables
+export CPATH            := $(LOCAL)/include:$(CPATH)
+export LIBRARY_PATH     := $(LOCAL)/lib:$(LIBRARY_PATH)
+export LD_LIBRARY_PATH  := $(LOCAL)/lib:$(LD_LIBRARY_PATH)
+export PKG_CONFIG_PATH  := $(LOCAL)/lib/pkgconfig:$(PKG_CONFIG_PATH)
+
 all: mlx
 
 mlx:
 	cd mlx_CLXV && \
-	wget -q https://xcb.freedesktop.org/dist/xcb-util-keysyms-0.4.1.tar.xz && \
-	tar -xf xcb-util-keysyms-0.4.1.tar.xz && \
+	if [ ! -d "xcb-util-keysyms-0.4.1" ]; then \
+		wget -q https://xcb.freedesktop.org/dist/xcb-util-keysyms-0.4.1.tar.xz && \
+		tar -xf xcb-util-keysyms-0.4.1.tar.xz; \
+	fi && \
 	cd xcb-util-keysyms-0.4.1 && \
-	./configure --prefix=$(HOME)/.local && \
-	make && \
+	./configure --prefix=$(LOCAL) && \
+	make -j$(shell nproc) && \
 	make install && \
 	cd .. && \
-	sed -i 's/$${CC:-cc} -E -/$${CC:-cc} $$(CFLAGS) -E -/' configure.sh && \
-	sed -i 's/$${CC:-cc} -x c - -l$$LIBNAME/$${CC:-cc} $$(LDFLAGS) -x c - -l$$LIBNAME/' configure.sh && \
-	CFLAGS="-I$(HOME)/.local/include" LDFLAGS="-L$(HOME)/.local/lib" ./configure.sh && \
-	make && \
+	./configure.sh && \
+	make -j$(shell nproc) && \
+	pip install mlx-2.2-py3-none-any.whl && \
 	cd .. && \
-	mv mlx_CLXV/libmlx.so . && \
-	cd mlx_CLXV && \
-	make clean
+	cp mlx_CLXV/libmlx.so .
 
-.PHONY: all mlx
+clean:
+	rm -rf mlx_CLXV/xcb-util-keysyms-0.4.1
+	$(MAKE) -C mlx_CLXV clean
+
+.PHONY: all mlx clean
