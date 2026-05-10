@@ -97,34 +97,27 @@ class Maze():
                 print(self.maze[height][width].hexadecimal, end="")
             print()
 
-    def view_maze_ascii(self) -> None:
-        # Usamos caracteres sólidos para que se vea mejor
-        WALL_H = "---"  # Pared horizontal
-        WALL_V = "|"    # Pared vertical
-        CORNER = "+"    # Esquina/Cruce
-        EMPTY_H = "   " # Hueco horizontal
-        EMPTY_V = " "   # Hueco vertical
+    def view_maze_ascii(self, file: int) -> None:
+        WALL_H: str = "---"
+        WALL_V: str = "|"
+        CORNER: str = "+"
+        EMPTY_H: str = "   "
+        EMPTY_V: str = " "
 
         for height in range(self.data.HEIGHT):
-            line_top = ""   # Línea de esquinas y techos (Norte)
-            line_mid = ""   # Línea de paredes laterales y contenido (Oeste/Este)
+            line_top = ""
+            line_mid = ""
             
             for width in range(self.data.WIDTH):
                 cell = self.maze[height][width]
                 n = bool(cell.binary & 8)
                 w = bool(cell.binary & 1)
 
-                # 1. CONSTRUCCIÓN DE LA PARTE SUPERIOR (Esquina + Techo)
                 if CellType.FORTY_TWO in cell.cell_type:
-                    line_top += "####" # Bloque sólido para el 42
-                else:
-                    # Esquina superior izquierda + Techo Norte
-                    line_top += CORNER + (WALL_H if n else EMPTY_H)
-
-                # 2. CONSTRUCCIÓN DE LA PARTE CENTRAL (Pared Oeste + Contenido)
-                if CellType.FORTY_TWO in cell.cell_type:
+                    line_top += "####"
                     line_mid += "####"
                 else:
+                    line_top += CORNER + (WALL_H if n else EMPTY_H)
                     char_w = WALL_V if w else EMPTY_V
                     
                     if CellType.ENTRY in cell.cell_type:
@@ -136,20 +129,17 @@ class Maze():
                     
                     line_mid += char_w + content
 
-            # Al final de cada fila, cerramos la pared ESTE y la esquina
-            # Miramos la última celda de la fila para saber si cerrar
             last_cell = self.maze[height][-1]
             e = bool(last_cell.binary & 4)
             line_top += CORNER
             line_mid += (WALL_V if e else EMPTY_V)
             
-            print(line_top)
-            print(line_mid)
+            print(line_top, file=file)
+            print(line_mid, file=file)
 
-        # Al terminar todas las filas, imprimimos la línea de SUELO final (Sur)
         last_row_line = ""
         for width in range(self.data.WIDTH):
             cell = self.maze[self.data.HEIGHT - 1][width]
             s = bool(cell.binary & 2)
             last_row_line += CORNER + (WALL_H if s else EMPTY_H)
-        print(last_row_line + CORNER)
+        print(last_row_line + CORNER, file=file)
