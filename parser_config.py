@@ -14,7 +14,7 @@ class Data(BaseModel):
     EXIT: tuple[int, int]
     OUTPUT_FILE: str = Field(..., min_length=5)
     PERFECT: bool
-    SEED: int = randint(1, maxs)
+    SEED: int = Field(default_factory=lambda: randint(1, maxs))
 
     @model_validator(mode="before")
     @classmethod

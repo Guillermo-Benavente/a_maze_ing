@@ -4,6 +4,5 @@ ENTRY=0,0
 EXIT=19,12
 OUTPUT_FILE=maze.txt
 PERFECT=True
-SEED=10
 
 # hola

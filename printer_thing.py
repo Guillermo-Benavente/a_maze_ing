@@ -1,110 +1,118 @@
 from mlx import Mlx
-
-CELL_SIZE = 40
-
-hola = """9515391539551795151151153
-EBABAE812853C1412BA812812
-96A8416A84545412AC4282C2A
-C3A83816A9395384453A82D02
-96842A852AC07AAD13A8283C2
-C1296C43AAB83AA92AA8686BA
-92E853968428444682AC12902
-AC3814452FA83FFF82C52C42A
-85684117AFC6857FAC1383D06
-C53AD043AFFFAFFF856AA8143
-91441294297FAFD501142C6BA
-AA912AC3843FAFFF82856D52A
-842A8692A92B8517C4451552A
-816AC384468285293917A9542
-C416928513C443A828456C3BA
-91416AA92C393A82801553AAA
-A81292AA814682C6A8693C6AA
-A8442C6C2C1168552C16A9542
-86956951692C1455416928552
-C545545456C54555545444556"""
-
-mapa = [list(i) for i in hola.split("\n")]
-dic = {c: int(c, 16) for c in "0123456789ABCDEF"}
-
-ROWS = len(mapa)
-COLS = len(mapa[0])
-WIDTH = COLS * CELL_SIZE
-HEIGHT = ROWS * CELL_SIZE
-
-WALL_COLOR = 0xFFFFFF   # blanco
-FLOOR_COLOR = 0x000000  # negro
-
-def draw_maze(m: Mlx, mlx_ptr, data, size_line):
-    for y in range(ROWS):
-        for x in range(COLS):
-            v = dic[mapa[y][x]]
-            px = x * CELL_SIZE
-            py = y * CELL_SIZE
-
-            # rellenar celda de negro
-            for dy in range(CELL_SIZE):
-                for dx in range(CELL_SIZE):
-                    idx = (py + dy) * size_line + (px + dx) * 4
-                    data[idx] = 0x00
-                    data[idx + 1] = 0x00
-                    data[idx + 2] = 0x00
-                    data[idx + 3] = 0xFF
-
-            # pared norte (bit 0)
-            if (v >> 0) & 1:
-                for dx in range(CELL_SIZE):
-                    idx = py * size_line + (px + dx) * 4
-                    data[idx] = 0xFF
-                    data[idx + 1] = 0xFF
-                    data[idx + 2] = 0xFF
-
-            # pared este (bit 1)
-            if (v >> 1) & 1:
-                for dy in range(CELL_SIZE):
-                    idx = (py + dy) * size_line + (px + CELL_SIZE - 1) * 4
-                    data[idx] = 0xFF
-                    data[idx + 1] = 0xFF
-                    data[idx + 2] = 0xFF
-                    data[idx + 3] = 0xFF
-
-            # pared sur (bit 2)
-            if (v >> 2) & 1:
-                for dx in range(CELL_SIZE):
-                    idx = (py + CELL_SIZE - 1) * size_line + (px + dx) * 4
-                    data[idx] = 0xFF
-                    data[idx + 1] = 0xFF
-                    data[idx + 2] = 0xFF
-                    data[idx + 3] = 0xFF
-
-            # pared oeste (bit 3)
-            if (v >> 3) & 1:
-                for dy in range(CELL_SIZE):
-                    idx = (py + dy) * size_line + px * 4
-                    data[idx] = 0xFF
-                    data[idx + 1] = 0xFF
-                    data[idx + 2] = 0xFF
-                    data[idx + 3] = 0xFF
+from maze.cell import Cell
+from maze.enums import CellType
+from colors import All_colors, ColorCell
+from parser_config import Data, lector
+from maze.maze import Maze
 
 
-def key_how(key: int, param: Mlx, x = -5, y = -5) -> None:
-    if x != -5:
-        ... # print(y())
-    print(f"{x}, {y}", end=" ")
-    print(key)
-    if key == 65307:
-        param.mlx_loop_exit(param.mlx_ptr)
+class Drawer():
 
-if __name__ == "__main__":
-    m = Mlx()
-    m.mlx_ptr = m.mlx_init()
-    win = m.mlx_new_window(m.mlx_ptr, WIDTH + 20, HEIGHT + 20, "Laberinto")
-    img = m.mlx_new_image(m.mlx_ptr, WIDTH, HEIGHT)
+    maze: Maze
+    mapa: list[list[Cell]]
+    ROWS: int
+    COLS: int
+    WIDTH: int
+    HEIGHT: int
+    CELL_SIZE = 20
+    ALL_COLORS = All_colors()
+    m: Mlx
 
-    data, _, size_line, _ = m.mlx_get_data_addr(img)
+    def __init__(self, mapa: Maze) -> None:
+        self.maze = mapa
+        self.mapa = mapa.maze
+        self.ROWS = len(mapa.maze)
+        self.COLS = len(mapa.maze[0])
+        self.WIDTH = len(mapa.maze[0]) * self.CELL_SIZE
+        self.HEIGHT = len(mapa.maze) * self.CELL_SIZE
 
-    draw_maze(m, m.mlx_ptr, data, size_line)
+    def __put_pixel(self, col: tuple, data, idx) -> None:
+        data[idx] = col[0]
+        data[idx + 1] = col[1]
+        data[idx + 2] = col[2]
+        data[idx + 3] = col[3]
 
-    m.mlx_put_image_to_window(m.mlx_ptr, win, img, 10, 10)
-    m.mlx_mouse_hook(win, key_how, m)
-    m.mlx_key_hook(win, key_how, m)
-    m.mlx_loop(m.mlx_ptr)
+    def __put_walls(self, v: Cell, data, idx) -> None:
+        if CellType.FORTY_TWO in v.cell_type:
+            self.__put_pixel(self.ALL_COLORS.get_color(
+                ColorCell.WALL_42.value), data, idx)
+        else:
+            self.__put_pixel(self.ALL_COLORS.get_color(
+                ColorCell.WALL.value), data, idx)
+
+    def __draw_maze(self, m: Mlx, mlx_ptr, data, size_line) -> None:
+        for y in range(self.ROWS):
+            for x in range(self.COLS):
+                v = self.mapa[y][x]
+                px = x * self.CELL_SIZE
+                py = y * self.CELL_SIZE
+
+                for dy in range(self.CELL_SIZE):
+                    for dx in range(self.CELL_SIZE):
+                        idx = (py + dy) * size_line + (px + dx) * 4
+                        if CellType.FORTY_TWO in v.cell_type:
+                            self.__put_pixel(self.ALL_COLORS.get_color(
+                                ColorCell.FLOOR_42.value), data, idx)
+                        elif CellType.ENTRY in v.cell_type:
+                            self.__put_pixel(self.ALL_COLORS.get_color(
+                                ColorCell.ENTRY.value), data, idx)
+                        elif CellType.EXIT in v.cell_type:
+                            self.__put_pixel(self.ALL_COLORS.get_color(
+                                ColorCell.EXIT.value), data, idx)
+                        else:
+                            self.__put_pixel(self.ALL_COLORS.get_color(
+                                ColorCell.FLOOR.value), data, idx)
+
+                if v.walls.north:
+                    for dx in range(self.CELL_SIZE):
+                        idx = py * size_line + (px + dx) * 4
+                        self.__put_walls(v, data, idx)
+
+                if v.walls.east:
+                    for dy in range(self.CELL_SIZE):
+                        idx = (py + dy) * size_line + (
+                               (px + self.CELL_SIZE - 1) * 4)
+                        self.__put_walls(v, data, idx)
+
+                if v.walls.south:
+                    for dx in range(self.CELL_SIZE):
+                        idx = (py + self.CELL_SIZE - 1) * size_line + (
+                            (px + dx) * 4)
+                        self.__put_walls(v, data, idx)
+
+                if v.walls.west:
+                    for dy in range(self.CELL_SIZE):
+                        idx = (py + dy) * size_line + px * 4
+                        self.__put_walls(v, data, idx)
+
+    def _key_how(self, key: int, param: Mlx) -> None:
+        if key in (49, 50, 51, 52, 53):
+            if key == 49:
+                self.ALL_COLORS.all_colors()
+            if key == 50:
+                self.mapa = Maze(Data.model_validate(
+                    lector("config.txt"))).maze
+            self.__draw_maze(self.m, self.m.mlx_ptr, self.data, self.size_line)
+            self.m.mlx_put_image_to_window(self.m.mlx_ptr,
+                                           self.win, self.img, 10, 10)
+        if key == 65307:
+            param.mlx_loop_exit(param.mlx_ptr)
+
+    def visualizer(self):
+        self.m = Mlx()
+        self.m.mlx_ptr = self.m.mlx_init()
+        self.win = self.m.mlx_new_window(self.m.mlx_ptr,
+                                         self.WIDTH + 20,
+                                         self.HEIGHT + 20,
+                                         "Laberinto")
+        self.img = self.m.mlx_new_image(self.m.mlx_ptr, self.WIDTH,
+                                        self.HEIGHT)
+
+        self.data, _, self.size_line, _ = self.m.mlx_get_data_addr(self.img)
+
+        self.__draw_maze(self.m, self.m.mlx_ptr, self.data, self.size_line)
+
+        self.m.mlx_put_image_to_window(self.m.mlx_ptr, self.win,
+                                       self.img, 10, 10)
+        self.m.mlx_key_hook(self.win, self._key_how, self.m)
+        self.m.mlx_loop(self.m.mlx_ptr)

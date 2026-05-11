@@ -8,21 +8,27 @@
 # lint-strict:
 #  flake8 . & mypy . --strict
 
+SHELL := /bin/bash
 
 NAME    = libmlx.so
 LOCAL   = $(HOME)/.local
-# Add local paths to environment variables
 export CPATH            := $(LOCAL)/include:$(CPATH)
 export LIBRARY_PATH     := $(LOCAL)/lib:$(LIBRARY_PATH)
 export LD_LIBRARY_PATH  := $(LOCAL)/lib:$(LD_LIBRARY_PATH)
 export PKG_CONFIG_PATH  := $(LOCAL)/lib/pkgconfig:$(PKG_CONFIG_PATH)
 
-all: mlx
+all: venv mlx
+
+venv:
+	@python3 -m venv .venv && \
+	source ./.venv/bin/activate
 
 mlx:
-	cd mlx_CLXV && \
+	@cd mlx_CLXV && \
 	if [ ! -d "xcb-util-keysyms-0.4.1" ]; then \
-		wget -q https://xcb.freedesktop.org/dist/xcb-util-keysyms-0.4.1.tar.xz && \
+		if [ ! -d "xcb-util-keysyms-0.4.1.tar.xz" ]; then \
+			wget -q https://xcb.freedesktop.org/dist/xcb-util-keysyms-0.4.1.tar.xz && \
+		fi && \
 		tar -xf xcb-util-keysyms-0.4.1.tar.xz; \
 	fi && \
 	cd xcb-util-keysyms-0.4.1 && \
@@ -37,7 +43,9 @@ mlx:
 	cp mlx_CLXV/libmlx.so .
 
 clean:
-	rm -rf mlx_CLXV/xcb-util-keysyms-0.4.1
-	$(MAKE) -C mlx_CLXV clean
+	@rm -rf mlx_CLXV/xcb-util-keysyms-0.4.1 libmlx.so && \
+	@$(MAKE) -C mlx_CLXV clean
 
-.PHONY: all mlx clean
+re: clean all
+
+.PHONY: all mlx clean re venv
