@@ -3,16 +3,16 @@ from enum import Enum
 
 class Colors():
     __pos: int
-    __color: list[tuple]
+    __color: list[tuple[int, int, int, int]]
 
-    def __init__(self, color):
+    def __init__(self, color: list[tuple[int, int, int, int]]) -> None:
         self.__pos = 0
         self.__color = color
 
     def get_pos(self) -> int:
         return self.__pos
 
-    def get_color(self) -> tuple:
+    def get_color(self) -> tuple[int, int, int, int]:
         return self.__color[self.get_pos()]
 
     def _set_pos(self, pos: int) -> None:
@@ -64,7 +64,7 @@ class Acolors():
 
     lista = [__wall, __floor, __entrance, __exits, __way]
 
-    def __init__(self):
+    def __init__(self) -> None:
         for i in Acolors.lista:
             self.color.append(Colors(i))
 
@@ -72,7 +72,7 @@ class Acolors():
         for i in self.color:
             self.__incrementcolor(i)
 
-    def _evol_color(self, pos: int):
+    def _evol_color(self, pos: int) -> None:
         self.__incrementcolor(self.color[pos])
 
     def __incrementcolor(self, color: Colors) -> None:
@@ -81,10 +81,10 @@ class Acolors():
             return
         color._set_pos(color.get_pos() + 1)
 
-    def get_color(self, pos: int) -> tuple:
+    def get_color(self, pos: int) -> tuple[int, int, int, int]:
         if 0 <= pos <= 4:
             return self.color[pos].get_color()
-        return ()
+        return (0, 0, 0, 0)
 
 
 class All_colors():
@@ -112,13 +112,13 @@ class All_colors():
         for i in self.number42:
             self.lista.append(Colors(i))
 
-    def __evol_this(self):
+    def __evol_this(self) -> None:
         self.__incrementcolor(self.lista[0])
         self.__incrementcolor(self.lista[1])
 
-    def evol_color(self, pos: int):
+    def evol_color(self, pos: int) -> None:
         if 0 <= pos <= 4:
-            self.al.evol_color(pos)
+            self.al._evol_color(pos)
         self.__evol_this()
 
     def __incrementcolor(self, color: Colors) -> None:
@@ -127,14 +127,14 @@ class All_colors():
             return
         color._set_pos(color.get_pos() + 1)
 
-    def get_color(self, pos: int) -> tuple | list:
+    def get_color(self, pos: int) -> tuple[int, int, int, int]:
         if 0 <= pos <= 4:
             return self.al.get_color(pos)
         if 6 == pos:
             return self.lista[pos - 6].get_color()
         elif 7 == pos:
             return self.lista[pos - 6].get_color()
-        return []
+        return (0, 0, 0, 0)
 
     def all_colors(self) -> None:
         self.al._all_colors()
@@ -147,6 +147,5 @@ class ColorCell(Enum):
     ENTRY = 2
     EXIT = 3
     WAY = 4
-    NUMBER_42 = 5
     WALL_42 = 6
     FLOOR_42 = 7

@@ -4,6 +4,7 @@ from maze.enums import CellType
 from colors import All_colors, ColorCell
 from parser_config import Data, lector
 from maze.maze import Maze
+from typing import Any
 
 
 class Drawer():
@@ -26,13 +27,14 @@ class Drawer():
         self.WIDTH = len(mapa.maze[0]) * self.CELL_SIZE
         self.HEIGHT = len(mapa.maze) * self.CELL_SIZE
 
-    def __put_pixel(self, col: tuple, data, idx) -> None:
+    def __put_pixel(self, col: tuple[int, int, int, int], data: list[Any],
+                    idx: int) -> None:
         data[idx] = col[0]
         data[idx + 1] = col[1]
         data[idx + 2] = col[2]
         data[idx + 3] = col[3]
 
-    def __put_walls(self, v: Cell, data, idx) -> None:
+    def __put_walls(self, v: Cell, data: list[Any], idx: int) -> None:
         if CellType.FORTY_TWO in v.cell_type:
             self.__put_pixel(self.ALL_COLORS.get_color(
                 ColorCell.WALL_42.value), data, idx)
@@ -40,7 +42,7 @@ class Drawer():
             self.__put_pixel(self.ALL_COLORS.get_color(
                 ColorCell.WALL.value), data, idx)
 
-    def __draw_maze(self, m: Mlx, mlx_ptr, data, size_line) -> None:
+    def __draw_maze(self, data: list[Any], size_line: int) -> None:
         for y in range(self.ROWS):
             for x in range(self.COLS):
                 v = self.mapa[y][x]
@@ -92,13 +94,13 @@ class Drawer():
             if key == 50:
                 self.mapa = Maze(Data.model_validate(
                     lector("config.txt"))).maze
-            self.__draw_maze(self.m, self.m.mlx_ptr, self.data, self.size_line)
+            self.__draw_maze(self.data, self.size_line)
             self.m.mlx_put_image_to_window(self.m.mlx_ptr,
                                            self.win, self.img, 10, 10)
         if key == 65307:
             param.mlx_loop_exit(param.mlx_ptr)
 
-    def visualizer(self):
+    def visualizer(self) -> None:
         self.m = Mlx()
         self.m.mlx_ptr = self.m.mlx_init()
         self.win = self.m.mlx_new_window(self.m.mlx_ptr,
@@ -109,10 +111,12 @@ class Drawer():
                                         self.HEIGHT)
 
         self.data, _, self.size_line, _ = self.m.mlx_get_data_addr(self.img)
+        print(self.size_line)
 
-        self.__draw_maze(self.m, self.m.mlx_ptr, self.data, self.size_line)
+        self.__draw_maze(self.data, self.size_line)
 
         self.m.mlx_put_image_to_window(self.m.mlx_ptr, self.win,
                                        self.img, 10, 10)
+        self.m.mlx_do_key_autorepeaton(self.m.mlx_ptr)
         self.m.mlx_key_hook(self.win, self._key_how, self.m)
         self.m.mlx_loop(self.m.mlx_ptr)

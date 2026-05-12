@@ -1,6 +1,7 @@
 # Depenencias
 python:
 	- pydatic
+	- numpy
 
 # MLX
 

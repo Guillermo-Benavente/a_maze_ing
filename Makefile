@@ -21,16 +21,17 @@ all: venv mlx
 
 venv:
 	@python3 -m venv .venv && \
-	source ./.venv/bin/activate
+	source ./.venv/bin/activate && \
+	pip install pydantic
 
 mlx:
 	@cd mlx_CLXV && \
 	if [ ! -d "xcb-util-keysyms-0.4.1" ]; then \
 		if [ ! -d "xcb-util-keysyms-0.4.1.tar.xz" ]; then \
-			wget -q https://xcb.freedesktop.org/dist/xcb-util-keysyms-0.4.1.tar.xz && \
-		fi && \
+			wget -q https://xcb.freedesktop.org/dist/xcb-util-keysyms-0.4.1.tar.xz; \
+		fi; \
 		tar -xf xcb-util-keysyms-0.4.1.tar.xz; \
-	fi && \
+	fi; \
 	cd xcb-util-keysyms-0.4.1 && \
 	./configure --prefix=$(LOCAL) && \
 	make -j$(shell nproc) && \
@@ -40,11 +41,16 @@ mlx:
 	make -j$(shell nproc) && \
 	pip install mlx-2.2-py3-none-any.whl && \
 	cd .. && \
-	cp mlx_CLXV/libmlx.so .
+	cp mlx_CLXV/$(NAME) .
+
+
+fclean: clean
+	rm -rf $(NAME)
+
 
 clean:
-	@rm -rf mlx_CLXV/xcb-util-keysyms-0.4.1 libmlx.so && \
-	@$(MAKE) -C mlx_CLXV clean
+	@rm -rf mlx_CLXV/xcb-util-keysyms-0.4.1 && \
+	$(MAKE) -C mlx_CLXV clean
 
 re: clean all
 
