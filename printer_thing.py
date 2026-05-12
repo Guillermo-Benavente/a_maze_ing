@@ -3,13 +3,13 @@ from maze.cell import Cell
 from maze.enums import CellType
 from colors import All_colors, ColorCell
 from parser_config import Data, lector
-from maze.maze import Maze
+from maze.maze_generator import MazeGenerator
 from typing import Any
 
 
 class Drawer():
 
-    maze: Maze
+    maze: MazeGenerator
     mapa: list[list[Cell]]
     ROWS: int
     COLS: int
@@ -19,7 +19,7 @@ class Drawer():
     ALL_COLORS = All_colors()
     m: Mlx
 
-    def __init__(self, mapa: Maze) -> None:
+    def __init__(self, mapa: MazeGenerator) -> None:
         self.maze = mapa
         self.mapa = mapa.maze
         self.ROWS = len(mapa.maze)
@@ -92,7 +92,7 @@ class Drawer():
             if key == 49:
                 self.ALL_COLORS.all_colors()
             if key == 50:
-                self.mapa = Maze(Data.model_validate(
+                self.mapa = MazeGenerator(Data.model_validate(
                     lector("config.txt"))).maze
             self.__draw_maze(self.data, self.size_line)
             self.m.mlx_put_image_to_window(self.m.mlx_ptr,

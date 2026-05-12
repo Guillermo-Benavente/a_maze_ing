@@ -1,6 +1,7 @@
 from .enums import CellType, LimitWallType
 from .wall import Wall
 
+
 class Cell():
     hexadecimal: str
     binary: int

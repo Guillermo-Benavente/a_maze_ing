@@ -30,7 +30,7 @@ def operate(num: Cell, thinks: list[tuple[str, int, int]],
 #         not num.walls.west
 #     ]
 #     for n in range(len(thinks)):
-        
+#
 #     if not num.walls.north:
 #         order.append(thinks[0])
 #     if not num.walls.east:
@@ -109,7 +109,7 @@ def found_pesos(enter: tuple[int, int], exits: tuple[int, int],
         visited.add((x, y))
         num = maps[y][x]
         order = operate(num, dirs, order, (exix, exiy),
-                        (x, y), abs(x - exix) + abs( y - exiy))
+                        (x, y), abs(x - exix) + abs(y - exiy))
         for te, xx, yy in order:
             yield from algoritm(text + te, x + xx, y + yy, visited)
 

@@ -9,7 +9,7 @@ class Wall():
         self.east = True
         self.south = True
         self.west = True
-    
+
     def bin(self) -> list[str]:
         return [
             f"{int(self.north)}",

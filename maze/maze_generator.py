@@ -1,11 +1,15 @@
+from typing import TextIO
+from sys import stdout
 from parser_config import Data
 from .enums import CellType, LimitWallType
 from .cell import Cell
 
-class Maze():
+
+class MazeGenerator():
     maze: list[list[Cell]]
     valid_cells: set[Cell]
     data: Data
+
     def __init__(self, data: Data) -> None:
         from .maze_miner import MazeMiner
         if data.WIDTH < 7 or data.HEIGHT < 5:
@@ -44,7 +48,7 @@ class Maze():
         height: int = cell.position[1]
         width: int = cell.position[0]
         if (
-            start_height <= height < start_height + 5 and 
+            start_height <= height < start_height + 5 and
             start_width <= width < start_width + 7
         ):
             i: int = height - start_height
@@ -55,8 +59,8 @@ class Maze():
                     not (i == 1 and 1 <= j <= 5) and
                     not (i == 3 and j in [0, 1, 5, 6]) and
                     not (i == 4 and (j == 0 or j == 1))
-                ):
-                    cell.cell_type.append(CellType.FORTY_TWO)
+            ):
+                cell.cell_type.append(CellType.FORTY_TWO)
 
     def _create_limits(self, cell: Cell) -> None:
         height: int = cell.position[1]
@@ -76,7 +80,7 @@ class Maze():
                 cell.limit_wall_type.append(LimitWallType.SOUTH)
             if width == self.data.WIDTH - 1:
                 cell.limit_wall_type.append(LimitWallType.EAST)
-    
+
     def _search_inout(self, cell: Cell) -> None:
         height: int = cell.position[1]
         width: int = cell.position[0]
@@ -97,7 +101,7 @@ class Maze():
                 print(self.maze[height][width].hexadecimal, end="")
             print()
 
-    def view_maze_ascii(self, file: int) -> None:
+    def view_maze_ascii(self, file: TextIO = stdout) -> None:
         WALL_H: str = "---"
         WALL_V: str = "|"
         CORNER: str = "+"
@@ -107,36 +111,29 @@ class Maze():
         for height in range(self.data.HEIGHT):
             line_top = ""
             line_mid = ""
-            
             for width in range(self.data.WIDTH):
                 cell = self.maze[height][width]
                 n = bool(cell.binary & 8)
                 w = bool(cell.binary & 1)
-
                 if CellType.FORTY_TWO in cell.cell_type:
                     line_top += "####"
                     line_mid += "####"
                 else:
                     line_top += CORNER + (WALL_H if n else EMPTY_H)
                     char_w = WALL_V if w else EMPTY_V
-                    
                     if CellType.ENTRY in cell.cell_type:
                         content = "[_]"
                     elif CellType.EXIT in cell.cell_type:
                         content = "_H_"
                     else:
                         content = "   "
-                    
                     line_mid += char_w + content
-
             last_cell = self.maze[height][-1]
             e = bool(last_cell.binary & 4)
             line_top += CORNER
             line_mid += (WALL_V if e else EMPTY_V)
-            
             print(line_top, file=file)
             print(line_mid, file=file)
-
         last_row_line = ""
         for width in range(self.data.WIDTH):
             cell = self.maze[self.data.HEIGHT - 1][width]

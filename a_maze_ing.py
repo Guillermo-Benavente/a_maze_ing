@@ -2,7 +2,7 @@
 # from os import path, makedirs
 from time import perf_counter
 from parser_config import Data, lector
-from maze.maze import Maze
+from maze.maze_generator import MazeGenerator
 from pydantic import ValidationError
 from printer_thing import Drawer
 from algoritm import found_all
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     try:
         start_time: float = perf_counter()
         data = Data.model_validate(lector("config.txt"))
-        maze: Maze = Maze(data)
+        maze: MazeGenerator = MazeGenerator(data)
         draw = Drawer(maze)
         draw.visualizer()
         end_time: float = perf_counter()
