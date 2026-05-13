@@ -1,5 +1,5 @@
 from typing import TextIO
-from sys import stdout
+from sys import stdout, stderr
 from parser_config import Data
 from .enums import CellType, LimitWallType
 from .cell import Cell
@@ -12,8 +12,6 @@ class MazeGenerator():
 
     def __init__(self, data: Data) -> None:
         from .maze_miner import MazeMiner
-        if data.WIDTH < 7 or data.HEIGHT < 5:
-            raise Exception("size too small")
         self.maze = []
         self.valid_cells = set()
         self.data = data
@@ -21,19 +19,30 @@ class MazeGenerator():
         MazeMiner(self)
 
     def _create_maze(self) -> None:
-        start_height: int = (self.data.HEIGHT // 2) - 2
-        start_width: int = (self.data.WIDTH // 2) - 3
+        start_height: int = 0
+        start_width: int = 0
+        if self.data.WIDTH <= 7 and self.data.HEIGHT <= 5:
+            print("Maze too small to draw '42' pattern.", file=stderr)
+        elif self.data.WIDTH <= 7 or self.data.HEIGHT <= 5:
+            if self.data.WIDTH <= 7:
+                print("Width maze too small to draw '42' pattern.", file=stderr)
+            if self.data.HEIGHT <= 5:
+                print("height maze too small to draw '42' pattern.", file=stderr)
+        elif self.data.WIDTH != 8 or self.data.HEIGHT != 6:
+            start_height = (self.data.HEIGHT // 2) - 2
+            start_width = (self.data.WIDTH // 2) - 3
         for height in range(self.data.HEIGHT):
             cells: list[Cell] = []
             for width in range(self.data.WIDTH):
                 cell: Cell = Cell((width, height))
                 self._search_inout(cell)
                 self._create_limits(cell)
-                self._create_forty_two(
-                    cell,
-                    start_height,
-                    start_width
-                )
+                if self.data.WIDTH > 7 and self.data.HEIGHT > 5:
+                    self._create_forty_two(
+                        cell,
+                        start_height,
+                        start_width
+                    )
                 if CellType.FORTY_TWO not in cell.cell_type:
                     self.valid_cells.add(cell)
                 cells.append(cell)
