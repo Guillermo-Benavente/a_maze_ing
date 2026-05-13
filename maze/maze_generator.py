@@ -28,9 +28,11 @@ class MazeGenerator():
                 print("Width maze too small to draw '42' pattern.", file=stderr)
             if self.data.HEIGHT <= 5:
                 print("height maze too small to draw '42' pattern.", file=stderr)
-        elif self.data.WIDTH != 8 or self.data.HEIGHT != 6:
-            start_height = (self.data.HEIGHT // 2) - 2
-            start_width = (self.data.WIDTH // 2) - 3
+        else:
+            if self.data.WIDTH != 8:
+                start_width = (self.data.WIDTH // 2) - 3
+            if self.data.HEIGHT != 6:
+                start_height = (self.data.HEIGHT // 2) - 2
         for height in range(self.data.HEIGHT):
             cells: list[Cell] = []
             for width in range(self.data.WIDTH):
@@ -69,7 +71,13 @@ class MazeGenerator():
                     not (i == 3 and j in [0, 1, 5, 6]) and
                     not (i == 4 and (j == 0 or j == 1))
             ):
-                cell.cell_type.append(CellType.FORTY_TWO)
+                if (
+                    CellType.ENTRY in cell.cell_type or
+                    CellType.EXIT in cell.cell_type
+                ):
+                    raise Exception("Entry or exit coordinates collide with the '42' pattern zone.")
+                else:
+                    cell.cell_type.append(CellType.FORTY_TWO)
 
     def _create_limits(self, cell: Cell) -> None:
         height: int = cell.position[1]
