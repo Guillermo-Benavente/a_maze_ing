@@ -7,6 +7,12 @@ PYTHON        := $(shell pwd)/$(VENV)/bin/python3
 PIP           := $(shell pwd)/$(VENV)/bin/pip
 MLX_SRC       := mlx_src
 
+LOCAL   = $(HOME)/.local
+export CPATH            := $(LOCAL)/include:$(CPATH)
+export LIBRARY_PATH     := $(LOCAL)/lib:$(LIBRARY_PATH)
+export LD_LIBRARY_PATH  := $(LOCAL)/lib:$(LD_LIBRARY_PATH)
+export PKG_CONFIG_PATH  := $(LOCAL)/lib/pkgconfig:$(PKG_CONFIG_PATH)
+
 install:
 	@echo "Setting up virtual environment..."
 	@python3 -m venv $(VENV)
@@ -15,7 +21,19 @@ install:
 	@echo "Building MiniLibX..."
 	@rm -rf $(MLX_SRC) && mkdir $(MLX_SRC)
 	@tar -xf $(MLX_TGZ) -C $(MLX_SRC) --strip-components=1
-	@cd $(MLX_SRC) && ./configure.sh > /dev/null 2>&1
+	@cd $(MLX_SRC) && \
+	if [ ! -d "xcb-util-keysyms-0.4.1" ]; then \
+		if [ ! -d "xcb-util-keysyms-0.4.1.tar.xz" ]; then \
+			wget -q https://xcb.freedesktop.org/dist/xcb-util-keysyms-0.4.1.tar.xz; \
+		fi; \
+		tar -xf xcb-util-keysyms-0.4.1.tar.xz; \
+	fi; \
+	cd xcb-util-keysyms-0.4.1 && \
+	./configure --prefix=$(LOCAL) > /dev/null 2>&1 && \
+	make -j$(shell nproc) > /dev/null 2>&1 && \
+	make install > /dev/null 2>&1 && \
+	cd .. && \
+	./configure.sh > /dev/null 2>&1
 	@make -C $(MLX_SRC) libmlx.so > /dev/null 2>&1
 	@mkdir -p $(MLX_SRC)/python/src/mlx/
 	@cp $(MLX_SRC)/$(NAME) $(MLX_SRC)/python/src/mlx/
