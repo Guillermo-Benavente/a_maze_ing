@@ -18,7 +18,7 @@ class MazeMiner():
         miners: int = 1
         if (
             self.maze_generator.data.WIDTH >= 5 and
-            self.maze_generator.data.HEIGHT
+            self.maze_generator.data.HEIGHT >= 5
         ):
             miners = int(
                 (

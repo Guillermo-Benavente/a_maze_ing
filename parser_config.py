@@ -43,12 +43,12 @@ class Data(BaseModel):
     @model_validator(mode="after")
     def check_entry(self) -> "Data":
         x, y = self.ENTRY
-        assert 0 <= x <= self.WIDTH, "ENTRY: x fuera de rango"
-        assert 0 <= y <= self.HEIGHT, "ENTRY: y fuera de rango"
+        assert 0 <= x < self.WIDTH, "ENTRY: x fuera de rango"
+        assert 0 <= y < self.HEIGHT, "ENTRY: y fuera de rango"
         x2, y2 = self.EXIT
-        assert 0 <= x2 <= self.WIDTH, "EXIT: x fuera de rango"
-        assert 0 <= y2 <= self.HEIGHT, "EXIT: y fuera de rango"
-        assert x2 != x and y2 != y, "EXIT: is the same that ENTRY"
+        assert 0 <= x2 < self.WIDTH, "EXIT: x fuera de rango"
+        assert 0 <= y2 < self.HEIGHT, "EXIT: y fuera de rango"
+        assert x2 != x or y2 != y, "EXIT: is the same that ENTRY"
         assert self.OUTPUT_FILE.endswith(".txt"), "OUTPUT_FILE isn't a txt"
         return self
 
