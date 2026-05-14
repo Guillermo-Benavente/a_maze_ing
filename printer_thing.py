@@ -2,10 +2,12 @@ from mlx import Mlx
 from maze.cell import Cell
 from maze.enums import CellType
 from colors import All_colors, ColorCell
-from parser_config import Data, lector
+from parser_config import lector
 from maze.maze_generator import MazeGenerator
 from typing import Any
 from random import randint
+from sys import argv
+from sys import maxsize as maxs
 
 
 class Drawer():
@@ -16,7 +18,7 @@ class Drawer():
     COLS: int
     WIDTH: int
     HEIGHT: int
-    CELL_SIZE = 20
+    CELL_SIZE: int
     ALL_COLORS = All_colors()
     m: Mlx
 
@@ -25,6 +27,7 @@ class Drawer():
         self.mapa = mapa.maze
         self.ROWS = len(mapa.maze)
         self.COLS = len(mapa.maze[0])
+        self.CELL_SIZE = 20
         self.WIDTH = len(mapa.maze[0]) * self.CELL_SIZE
         self.HEIGHT = len(mapa.maze) * self.CELL_SIZE
 
@@ -93,9 +96,11 @@ class Drawer():
             if key == 49:
                 self.ALL_COLORS.all_colors()
             if key == 50:
-                if True:
+                dic = lector(argv[1])
+                if isinstance(dic.get("SEED"), str):
                     self.maze.data.SEED = randint(1, maxs)
                     self.mapa = MazeGenerator(self.maze.data).maze
+                    return
             self.__draw_maze(self.data, self.size_line)
             self.m.mlx_put_image_to_window(self.m.mlx_ptr,
                                            self.win, self.img, 10, 10)

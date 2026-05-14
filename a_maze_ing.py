@@ -5,7 +5,7 @@ from parser_config import Data, lector
 from maze.maze_generator import MazeGenerator
 from pydantic import ValidationError
 from printer_thing import Drawer
-from algoritm import found_all, found_pesos
+from sys import argv
 
 
 """if __name__ == "__main__":
@@ -38,9 +38,12 @@ from algoritm import found_all, found_pesos
 
 
 if __name__ == "__main__":
+    if len(argv[1:]) != 1:
+        print("There aren't configuration")
+        exit()
     try:
         start_time: float = perf_counter()
-        data = Data.model_validate(lector("config.txt"))
+        data = Data.model_validate(lector(argv[1]))
         maze: MazeGenerator = MazeGenerator(data)
         draw = Drawer(maze)
         draw.visualizer()
@@ -54,5 +57,5 @@ if __name__ == "__main__":
                 print(error["msg"])
         else:
             print(e)
-    except  Exception as e:
+    except Exception as e:
         print(e)
