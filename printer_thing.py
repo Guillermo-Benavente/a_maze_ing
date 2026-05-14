@@ -5,6 +5,7 @@ from colors import All_colors, ColorCell
 from parser_config import Data, lector
 from maze.maze_generator import MazeGenerator
 from typing import Any
+from random import randint
 
 
 class Drawer():
@@ -92,8 +93,9 @@ class Drawer():
             if key == 49:
                 self.ALL_COLORS.all_colors()
             if key == 50:
-                self.mapa = MazeGenerator(Data.model_validate(
-                    lector("config.txt"))).maze
+                if True:
+                    self.maze.data.SEED = randint(1, maxs)
+                    self.mapa = MazeGenerator(self.maze.data).maze
             self.__draw_maze(self.data, self.size_line)
             self.m.mlx_put_image_to_window(self.m.mlx_ptr,
                                            self.win, self.img, 10, 10)
@@ -111,12 +113,10 @@ class Drawer():
                                         self.HEIGHT)
 
         self.data, _, self.size_line, _ = self.m.mlx_get_data_addr(self.img)
-        print(self.size_line)
 
         self.__draw_maze(self.data, self.size_line)
 
         self.m.mlx_put_image_to_window(self.m.mlx_ptr, self.win,
                                        self.img, 10, 10)
-        self.m.mlx_do_key_autorepeaton(self.m.mlx_ptr)
         self.m.mlx_key_hook(self.win, self._key_how, self.m)
         self.m.mlx_loop(self.m.mlx_ptr)

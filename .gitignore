@@ -3,3 +3,4 @@ mazes_generated/
 __pycache__/
 libmlx.so
 mlx_CLXV/
+mlx_src/

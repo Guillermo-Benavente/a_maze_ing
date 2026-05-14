@@ -1,5 +1,5 @@
 from typing import TextIO
-from sys import stdout
+from sys import stdout, stderr
 from parser_config import Data
 from .enums import CellType, LimitWallType
 from .cell import Cell
@@ -12,28 +12,59 @@ class MazeGenerator():
 
     def __init__(self, data: Data) -> None:
         from .maze_miner import MazeMiner
-        if data.WIDTH < 7 or data.HEIGHT < 5:
-            raise Exception("size too small")
         self.maze = []
         self.valid_cells = set()
         self.data = data
         self._create_maze()
         MazeMiner(self)
+        algoritm = self.data.ALGORITM(self.maze)
+        for i in algoritm["algoritm"]():
+            pass
+        if len(algoritm["list"]()) != 0:
+            self.solution = algoritm["sorter"]()
+        else:
+            self.solution = None
+        self._generatedoc()
+
+    def _generatedoc(self) -> None:
+        with open(self.data.OUTPUT_FILE, "w") as fd:
+            for i in self.maze:
+                for j in i:
+                    print(j.hexadecimal, end="", file=fd)
+                print("", file=fd)
+            entry = f"{self.data.ENTRY}".strip('(').strip(')')
+            exits = f"{self.data.EXIT}".strip('(').strip(')')
+            print(f"\n{entry.replace(' ', '')}", file=fd)
+            print(exits.replace(' ', ''), file=fd)
+            print(self.solution, file=fd)
 
     def _create_maze(self) -> None:
-        start_height: int = (self.data.HEIGHT // 2) - 2
-        start_width: int = (self.data.WIDTH // 2) - 3
+        start_height: int = 0
+        start_width: int = 0
+        if self.data.WIDTH <= 7 and self.data.HEIGHT <= 5:
+            print("Maze too small to draw '42' pattern.", file=stderr)
+        elif self.data.WIDTH <= 7 or self.data.HEIGHT <= 5:
+            if self.data.WIDTH <= 7:
+                print("Width maze too small to draw '42' pattern.", file=stderr)
+            if self.data.HEIGHT <= 5:
+                print("height maze too small to draw '42' pattern.", file=stderr)
+        else:
+            if self.data.WIDTH != 8:
+                start_width = (self.data.WIDTH // 2) - 3
+            if self.data.HEIGHT != 6:
+                start_height = (self.data.HEIGHT // 2) - 2
         for height in range(self.data.HEIGHT):
             cells: list[Cell] = []
             for width in range(self.data.WIDTH):
                 cell: Cell = Cell((width, height))
                 self._search_inout(cell)
                 self._create_limits(cell)
-                self._create_forty_two(
-                    cell,
-                    start_height,
-                    start_width
-                )
+                if self.data.WIDTH > 7 and self.data.HEIGHT > 5:
+                    self._create_forty_two(
+                        cell,
+                        start_height,
+                        start_width
+                    )
                 if CellType.FORTY_TWO not in cell.cell_type:
                     self.valid_cells.add(cell)
                 cells.append(cell)
@@ -60,7 +91,13 @@ class MazeGenerator():
                     not (i == 3 and j in [0, 1, 5, 6]) and
                     not (i == 4 and (j == 0 or j == 1))
             ):
-                cell.cell_type.append(CellType.FORTY_TWO)
+                if (
+                    CellType.ENTRY in cell.cell_type or
+                    CellType.EXIT in cell.cell_type
+                ):
+                    raise Exception("Entry or exit coordinates collide with the '42' pattern zone.")
+                else:
+                    cell.cell_type.append(CellType.FORTY_TWO)
 
     def _create_limits(self, cell: Cell) -> None:
         height: int = cell.position[1]

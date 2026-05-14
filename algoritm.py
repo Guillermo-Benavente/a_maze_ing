@@ -17,29 +17,34 @@ def operate(num: Cell, thinks: list[tuple[str, int, int]],
         order.append(thinks[3])
     return order
 
+def generatepeso(local: tuple[int, int], exits: tuple[int, int]) -> int:
+    x, y = local
+    ex, ey = exits
+    return int(abs(x - ex) + abs(y - ey))
 
-# def operate(num: Cell, thinks: list[tuple[str, int, int]],
-#             order: list[tuple[str, int, int],
-#             exits: tuple[int, int], pos: tuple[int, int]],
-#             peso: int
-#             ) -> list[tuple[str, int, int]]:
-#     lis = [
-#         not num.walls.north,
-#         not num.walls.east,
-#         not num.walls.south,
-#         not num.walls.west
-#     ]
-#     for n in range(len(thinks)):
-#
-#     if not num.walls.north:
-#         order.append(thinks[0])
-#     if not num.walls.east:
-#         order.append(thinks[1])
-#     if not num.walls.south:
-#         order.append(thinks[2])
-#     if not num.walls.west:
-#         order.append(thinks[3])
-#     return order
+def operate(num: Cell, thinks: list[tuple[str, int, int]],
+            order: list[tuple[str, int, int]],
+            exits: tuple[int, int], pos: tuple[int, int],
+            peso: int
+            ) -> list[tuple[str, int, int]]:
+    operations: list[dict[str, Any]] = []
+    lis = [
+        not num.walls.north,
+        not num.walls.east,
+        not num.walls.south,
+        not num.walls.west
+    ]
+
+    for n in range(len(thinks)):
+        _, x, y = thinks[n]
+        operations.append({"peso": generatepeso((x, y), exits) - peso, 
+                           "thinks": thinks[n], "operate": lis[n]})
+
+    operations = sorted(operations, key=lambda x : x["peso"])
+    for elements in operations:
+        if elements["operate"]:
+            order.append(elements["thinks"])
+    return order
 
 
 def found_all(enter: tuple[int, int], exits: tuple[int, int],
@@ -90,17 +95,19 @@ def found_pesos(enter: tuple[int, int], exits: tuple[int, int],
     texts: list[str] = []
     enx, eny = enter
     exix, exiy = exits
-    dirs = [(('N', 0, -1)), (('E', 1, 0)), (('S', 0, 1)), (('W', -1, 0))]
+    dirs = [('N', 0, -1), ('E', 1, 0), ('S', 0, 1), ('W', -1, 0)]
 
     def algoritm(text: str = "", x: int = enx, y: int = eny,
                  visited: set[tuple[int, int]] = set()
                  ) -> Generator[str, None, None]:
         nonlocal texts
-        if text == "" and text:
+        if len(text) == 0:
             texts = []
         order: list[tuple[str, int, int]] = []
         if len(text) != 0:
             yield text
+        if len(texts) != 0:
+            return
         if x == exix and y == exiy:
             texts.append(text)
             return
@@ -109,9 +116,11 @@ def found_pesos(enter: tuple[int, int], exits: tuple[int, int],
         visited.add((x, y))
         num = maps[y][x]
         order = operate(num, dirs, order, (exix, exiy),
-                        (x, y), abs(x - exix) + abs(y - exiy))
+                        (x, y), int(abs(x - exix) + abs(y - exiy)))
         for te, xx, yy in order:
             yield from algoritm(text + te, x + xx, y + yy, visited)
+            if len(texts) != 0:
+                return
 
     def sorter() -> str:
         sol = sorted(texts, key=lambda x: len(x))

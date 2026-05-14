@@ -5,7 +5,7 @@ from parser_config import Data, lector
 from maze.maze_generator import MazeGenerator
 from pydantic import ValidationError
 from printer_thing import Drawer
-from algoritm import found_all
+from algoritm import found_all, found_pesos
 
 
 """if __name__ == "__main__":
@@ -48,16 +48,11 @@ if __name__ == "__main__":
         total_time: float = end_time - start_time
         print("\n¡Proceso completado!")
         print(f"Tiempo total: {total_time:.4f} segundos")
-        funtion = found_all(data.ENTRY, data.EXIT, maze.maze)
-        try:
-            for i in funtion["algoritm"]():
-                ...
-        except Exception as e:
-            print(e)
-        print(funtion["sorter"]())
     except (ValidationError, ValueError, AssertionError, PermissionError) as e:
         if isinstance(e, ValidationError):
             for error in e.errors():
                 print(error["msg"])
         else:
             print(e)
+    except  Exception as e:
+        print(e)

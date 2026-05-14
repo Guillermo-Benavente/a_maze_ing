@@ -15,12 +15,17 @@ class MazeMiner():
     def _mined(self) -> None:
         self.valid_cells: set[Cell] = self.maze_generator.valid_cells
         self.mined_cells: list[list[Cell]] = []
-        miners: int = int(
-            (
-                self.maze_generator.data.WIDTH *
-                self.maze_generator.data.HEIGHT
-            ) * 0.04
-        )
+        miners: int = 1
+        if (
+            self.maze_generator.data.WIDTH >= 5 and
+            self.maze_generator.data.HEIGHT >= 5
+        ):
+            miners = int(
+                (
+                    self.maze_generator.data.WIDTH *
+                    self.maze_generator.data.HEIGHT
+                ) * 0.04
+            )
         self.families: list[int] = list(range(miners))
         self._inital_points(miners)
         while self.valid_cells:
