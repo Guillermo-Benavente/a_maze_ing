@@ -17,6 +17,26 @@ class MazeGenerator():
         self.data = data
         self._create_maze()
         MazeMiner(self)
+        algoritm = self.data.ALGORITM(self.maze)
+        for i in algoritm["algoritm"]():
+            pass
+        if len(algoritm["list"]()) != 0:
+            self.solution = algoritm["sorter"]()
+        else:
+            self.solution = None
+        self._generatedoc()
+
+    def _generatedoc(self) -> None:
+        with open(self.data.OUTPUT_FILE, "w") as fd:
+            for i in self.maze:
+                for j in i:
+                    print(j.hexadecimal, end="", file=fd)
+                print("", file=fd)
+            entry = f"{self.data.ENTRY}".strip('(').strip(')')
+            exits = f"{self.data.EXIT}".strip('(').strip(')')
+            print(f"\n{entry.replace(' ', '')}", file=fd)
+            print(exits.replace(' ', ''), file=fd)
+            print(self.solution, file=fd)
 
     def _create_maze(self) -> None:
         start_height: int = 0
