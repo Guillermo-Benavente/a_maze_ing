@@ -5,6 +5,6 @@ EXIT=10,14
 OUTPUT_FILE=maze.txt
 PERFECT=False
 ALGORITM=2
-# HEIGHT=2
+HEIGHT=2
 
 # hola

@@ -89,7 +89,7 @@ def lector(archive: str) -> dict[str, str]:
             pass
         elif part and len(parts) == 2 and parts[0] and parts[1]:
             assert parts[0] in LIST, "Bad Sintax"
-            assert not parts[0] in sol, "Bad Sintax"
+            assert not parts[0] in sol, "Not duplicate permit"
             sol.update({parts[0].strip(" "): parts[1].strip(" ")})
         elif part:
             raise ValueError("Bad Sintax")

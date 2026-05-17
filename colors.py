@@ -130,9 +130,7 @@ class All_colors():
     def get_color(self, pos: int) -> tuple[int, int, int, int]:
         if 0 <= pos <= 4:
             return self.al.get_color(pos)
-        if 6 == pos:
-            return self.lista[pos - 6].get_color()
-        elif 7 == pos:
+        if 6 == pos or pos == 7:
             return self.lista[pos - 6].get_color()
         return (0, 0, 0, 0)
 

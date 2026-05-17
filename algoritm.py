@@ -108,8 +108,6 @@ def found_weight(enter: tuple[int, int], exits: tuple[int, int],
         order: list[tuple[str, int, int]] = []
         if len(text) != 0:
             yield text
-        if len(texts) != 0:
-            return
         if x == exix and y == exiy:
             texts.append(text)
             return
@@ -121,12 +119,9 @@ def found_weight(enter: tuple[int, int], exits: tuple[int, int],
                          (x, y), int(abs(x - exix) + abs(y - exiy)))
         for te, xx, yy in order:
             yield from algoritm(text + te, x + xx, y + yy, visited)
-            if len(texts) != 0:
-                return
 
     def sorter() -> str:
-        sol = sorted(texts, key=lambda x: len(x))
-        return sol[0]
+        return lista()[0]
 
     def lista() -> list[str]:
         sol = sorted(texts, key=lambda x: len(x))
