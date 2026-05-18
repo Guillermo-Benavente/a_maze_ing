@@ -7,7 +7,6 @@ from .cell import Cell
 
 class MazeGenerator():
     maze: list[list[Cell]]
-    valid_cells: set[Cell]
     data: Data
 
     def __init__(self, data: Data) -> None:
@@ -19,7 +18,6 @@ class MazeGenerator():
             ]
             for height in range(data.HEIGHT)
         ]
-        self.valid_cells = {cell for row in self.maze for cell in row}
         self.data = data
         self._create_maze()
         MazeMiner(self)
@@ -99,7 +97,6 @@ class MazeGenerator():
                             )
                         )
                     cell.cell_type.append(CellType.FORTY_TWO)
-                    self.valid_cells.discard(cell)
 
     def _create_limits(self) -> None:
         height: int = self.data.HEIGHT
