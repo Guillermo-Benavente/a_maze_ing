@@ -39,7 +39,7 @@ def operate2(num: Cell, thinks: list[tuple[str, int, int]],
 
     for n in range(len(thinks)):
         _, x, y = thinks[n]
-        operations.append({"weight": generateweight((x, y), exits) - weight,
+        operations.append({"weight": generateweight((x, y), exits),
                            "thinks": thinks[n], "operate": lis[n]})
 
     operations = sorted(operations, key=lambda x: x["weight"])
@@ -60,8 +60,9 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
                  visited: set[tuple[int, int]] = set()
                  ) -> Generator[str, None, None]:
         nonlocal texts
-        if text == "" and text:
+        if len(text) == 0:
             texts = []
+            visited.clear()
         order: list[tuple[str, int, int]] = []
         if len(text) != 0:
             yield text
@@ -105,6 +106,7 @@ def found_weight(enter: tuple[int, int], exits: tuple[int, int],
         nonlocal texts
         if len(text) == 0:
             texts = []
+            visited.clear()
         order: list[tuple[str, int, int]] = []
         if len(text) != 0:
             yield text

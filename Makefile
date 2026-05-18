@@ -49,7 +49,7 @@ run:
 	@:
 
 debug:
-	@$(PYTHON) -m pdb a_maze_ing.py
+	@$(PYTHON) -m pdb a_maze_ing.py $(filter-out $@, $(MAKECMDGOALS))
 
 clean:
 	@rm -rf __pycache__ .mypy_cache
