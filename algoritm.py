@@ -17,16 +17,18 @@ def operate(num: Cell, thinks: list[tuple[str, int, int]],
         order.append(thinks[3])
     return order
 
-def generatepeso(local: tuple[int, int], exits: tuple[int, int]) -> int:
+
+def generateweight(local: tuple[int, int], exits: tuple[int, int]) -> int:
     x, y = local
     ex, ey = exits
     return int(abs(x - ex) + abs(y - ey))
 
-def operate(num: Cell, thinks: list[tuple[str, int, int]],
-            order: list[tuple[str, int, int]],
-            exits: tuple[int, int], pos: tuple[int, int],
-            peso: int
-            ) -> list[tuple[str, int, int]]:
+
+def operate2(num: Cell, thinks: list[tuple[str, int, int]],
+             order: list[tuple[str, int, int]],
+             exits: tuple[int, int], pos: tuple[int, int],
+             weight: int
+             ) -> list[tuple[str, int, int]]:
     operations: list[dict[str, Any]] = []
     lis = [
         not num.walls.north,
@@ -37,10 +39,10 @@ def operate(num: Cell, thinks: list[tuple[str, int, int]],
 
     for n in range(len(thinks)):
         _, x, y = thinks[n]
-        operations.append({"peso": generatepeso((x, y), exits) - peso, 
+        operations.append({"weight": generateweight((x, y), exits),
                            "thinks": thinks[n], "operate": lis[n]})
 
-    operations = sorted(operations, key=lambda x : x["peso"])
+    operations = sorted(operations, key=lambda x: x["weight"])
     for elements in operations:
         if elements["operate"]:
             order.append(elements["thinks"])
@@ -58,8 +60,9 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
                  visited: set[tuple[int, int]] = set()
                  ) -> Generator[str, None, None]:
         nonlocal texts
-        if text == "" and text:
+        if len(text) == 0:
             texts = []
+            visited.clear()
         order: list[tuple[str, int, int]] = []
         if len(text) != 0:
             yield text
@@ -90,8 +93,8 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
     return funtul
 
 
-def found_pesos(enter: tuple[int, int], exits: tuple[int, int],
-                maps: list[list[Cell]]) -> dict[str, Callable[..., Any]]:
+def found_weight(enter: tuple[int, int], exits: tuple[int, int],
+                 maps: list[list[Cell]]) -> dict[str, Callable[..., Any]]:
     texts: list[str] = []
     enx, eny = enter
     exix, exiy = exits
@@ -103,11 +106,10 @@ def found_pesos(enter: tuple[int, int], exits: tuple[int, int],
         nonlocal texts
         if len(text) == 0:
             texts = []
+            visited.clear()
         order: list[tuple[str, int, int]] = []
         if len(text) != 0:
             yield text
-        if len(texts) != 0:
-            return
         if x == exix and y == exiy:
             texts.append(text)
             return
@@ -115,16 +117,13 @@ def found_pesos(enter: tuple[int, int], exits: tuple[int, int],
             return
         visited.add((x, y))
         num = maps[y][x]
-        order = operate(num, dirs, order, (exix, exiy),
-                        (x, y), int(abs(x - exix) + abs(y - exiy)))
+        order = operate2(num, dirs, order, (exix, exiy),
+                         (x, y), int(abs(x - exix) + abs(y - exiy)))
         for te, xx, yy in order:
             yield from algoritm(text + te, x + xx, y + yy, visited)
-            if len(texts) != 0:
-                return
 
     def sorter() -> str:
-        sol = sorted(texts, key=lambda x: len(x))
-        return sol[0]
+        return lista()[0]
 
     def lista() -> list[str]:
         sol = sorted(texts, key=lambda x: len(x))

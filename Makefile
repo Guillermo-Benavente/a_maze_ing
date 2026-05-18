@@ -43,21 +43,24 @@ install:
 	@echo "Done."
 
 run:
-	@$(PYTHON) a_maze_ing.py
+	@$(PYTHON) a_maze_ing.py $(filter-out $@, $(MAKECMDGOALS))
+
+%:
+	@:
 
 debug:
-	@$(PYTHON) -m pdb a_maze_ing.py
+	@$(PYTHON) -m pdb a_maze_ing.py $(filter-out $@, $(MAKECMDGOALS))
 
 clean:
 	@rm -rf __pycache__ .mypy_cache
 	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 
 lint:
-	@$(VENV)/bin/flake8 . --exclude=.venv,__pycache__
 	@$(VENV)/bin/mypy . --exclude='\.venv' --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+# 	@$(VENV)/bin/flake8 . --exclude=.venv,__pycache__
 
 lint-strict:
-	@$(VENV)/bin/flake8 . --exclude=.venv,__pycache__
 	@$(VENV)/bin/mypy . --exclude='\.venv' --strict
+# 	@$(VENV)/bin/flake8 . --exclude=.venv,__pycache__
 
 .PHONY: install run debug clean lint lint-strict

@@ -21,11 +21,11 @@ class MazeGenerator():
         self.data = data
         self._create_maze()
         MazeMiner(self)
-        algoritm = self.data.ALGORITM(self.maze)
-        for i in algoritm["algoritm"]():
+        self.algoritm = self.data.ALGORITM(self.maze)
+        for i in self.algoritm["algoritm"]():
             pass
-        if len(algoritm["list"]()) != 0:
-            self.solution = algoritm["sorter"]()
+        if len(self.algoritm["list"]()) != 0:
+            self.solution = self.algoritm["sorter"]()
         else:
             self.solution = None
         self._generatedoc()

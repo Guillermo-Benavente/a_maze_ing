@@ -3,11 +3,13 @@ from typing import Any
 from random import randint
 from sys import maxsize as maxs
 from typing import Callable
-from algoritm import found_all, found_pesos
+from algoritm import found_all, found_weight
 from functools import partial
+from sys import argv
 
 
-LIST = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT", "SEED", "ALGORITM"]
+LIST = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT", "SEED",
+        "ALGORITM"]
 
 
 class Data(BaseModel):
@@ -19,7 +21,7 @@ class Data(BaseModel):
     OUTPUT_FILE: str = Field(..., min_length=5)
     PERFECT: bool
     SEED: int = Field(default_factory=lambda: randint(1, maxs))
-    ALGORITM: Callable | None = None
+    ALGORITM: Callable[..., Any] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -42,6 +44,8 @@ class Data(BaseModel):
             exits = (int(x), int(y))
             sol.update({"EXIT": exits})
         if isinstance(datas.get("OUTPUT_FILE"), str):
+            assert argv[1] != datas["OUTPUT_FILE"], ("the output and input"
+                                                     " is the same")
             sol.update({"OUTPUT_FILE": datas["OUTPUT_FILE"]})
         if isinstance(datas.get("PERFECT"), str):
             value = datas["PERFECT"].lower()
@@ -53,7 +57,7 @@ class Data(BaseModel):
             if algoritm == 1:
                 sol.update({"ALGORITM": partial(found_all, entry, exits)})
             else:
-                sol.update({"ALGORITM": partial(found_pesos, entry, exits)})
+                sol.update({"ALGORITM": partial(found_weight, entry, exits)})
         return sol
 
     @model_validator(mode="after")
@@ -66,30 +70,39 @@ class Data(BaseModel):
         assert 0 <= y2 < self.HEIGHT, "EXIT: y fuera de rango"
         assert x2 != x or y2 != y, "EXIT: is the same that ENTRY"
         assert self.OUTPUT_FILE.endswith(".txt"), "OUTPUT_FILE isn't a txt"
-        if self.ALGORITM == None:
+        if not self.ALGORITM:
             self.ALGORITM = partial(found_all, self.ENTRY, self.EXIT)
         return self
 
 
 def lector(archive: str) -> dict[str, str]:
     sol: dict[str, str] = {}
-    with open(archive, "r") as fd:
-        content = fd.read()
-        contents = content.split("\n")
+    try:
+        with open(archive, "r") as fd:
+            content = fd.read()
+            contents = content.split("\n")
+    except FileNotFoundError:
+        raise FileNotFoundError(f"'{archive}' doesn't exist")
     for part in contents:
         parts = part.split("=")
-        if part and len(parts) == 2 and parts[0] and parts[1]:
+        if part.startswith("#"):
+            pass
+        elif part and len(parts) == 2 and parts[0] and parts[1]:
             assert parts[0] in LIST, "Bad Sintax"
+            assert not parts[0] in sol, "Not duplicate permit"
             sol.update({parts[0].strip(" "): parts[1].strip(" ")})
-        elif not part.startswith("#") and part:
+        elif part:
             raise ValueError("Bad Sintax")
     return sol
 
 
 if __name__ == "__main__":
     try:
-        data = Data.model_validate(lector("config.txt"))
-    except (ValidationError, ValueError, AssertionError, PermissionError) as e:
+        fd = open("hola.txt", "r")
+        fd.close()
+
+    except (ValidationError, ValueError,
+            AssertionError, PermissionError, FileNotFoundError) as e:
         if isinstance(e, ValidationError):
             for error in e.errors():
                 print(error["msg"])
