@@ -28,11 +28,18 @@ class MazeMiner():
         miners = int((width * height) * 0.04) or 1
         self.families: list[int] = list(range(miners))
         self._inital_points(miners)
-        while any(self.mined_cells):
+        while self._has_cells_alive():
             self._maze_mining(miners)
         del self.families
         del self.mined_cells
         del self.miner_map
+
+    def _has_cells_alive(self) -> bool:
+        for miner_list in self.mined_cells:
+            for wrapper in miner_list:
+                if not wrapper.is_dead:
+                    return True
+        return False
 
     def _inital_points(self, miners: int) -> None:
         valid_cells: list[Cell] = [
