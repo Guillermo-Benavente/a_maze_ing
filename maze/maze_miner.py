@@ -4,6 +4,14 @@ from .cell import Cell
 from .enums import CellType, LimitWallType
 
 
+class MinerCell:
+    __slots__ = ('cell', 'is_dead')
+
+    def __init__(self, cell: Cell) -> None:
+        self.cell = cell
+        self.is_dead = False
+
+
 class MazeMiner():
     maze_generator: MazeGenerator
 
@@ -13,98 +21,103 @@ class MazeMiner():
         self._mined()
 
     def _mined(self) -> None:
-        self.valid_cells: set[Cell] = self.maze_generator.valid_cells
-        self.mined_cells: list[list[Cell]] = []
-        miners: int = 1
-        if (
-            self.maze_generator.data.WIDTH >= 5 and
-            self.maze_generator.data.HEIGHT >= 5
-        ):
-            miners = int(
-                (
-                    self.maze_generator.data.WIDTH *
-                    self.maze_generator.data.HEIGHT
-                ) * 0.04
-            )
+        self.mined_cells: list[list[MinerCell]] = []
+        width: int = self.maze_generator.data.WIDTH
+        height: int = self.maze_generator.data.HEIGHT
+        self.miner_map = [[None for _ in range(width)] for _ in range(height)]
+        miners = int((width * height) * 0.04) or 1
         self.families: list[int] = list(range(miners))
         self._inital_points(miners)
-        while self.valid_cells:
+        while self._has_cells_alive():
             self._maze_mining(miners)
         del self.families
         del self.mined_cells
-        del self.valid_cells
+        del self.miner_map
+
+    def _has_cells_alive(self) -> bool:
+        for miner_list in self.mined_cells:
+            for wrapper in miner_list:
+                if not wrapper.is_dead:
+                    return True
+        return False
 
     def _inital_points(self, miners: int) -> None:
-        for miner in range(miners):
-            position_miner: Cell = sample(
-                sorted(self.valid_cells, key=lambda c: c.position), 1
-            )[0]
-            position_miner.miner_id = miner
-            self.mined_cells.append([position_miner])
-            self.valid_cells.remove(position_miner)
+        valid_cells: list[Cell] = [
+            cell
+            for row in self.maze_generator.maze
+            for cell in row
+            if CellType.FORTY_TWO not in cell.cell_type
+        ]
+        initial_cells: list[Cell] = sample(valid_cells, miners)
+        for miner, position_miner in enumerate(initial_cells):
+            position_miner.zone_id = miner
+            self.mined_cells.append([MinerCell(position_miner)])
 
     def _maze_mining(self, miners: int) -> None:
         maze: list[list[Cell]] = self.maze_generator.maze
+        DIRECTIONS: list[tuple[LimitWallType, int, int, LimitWallType]] = [
+            (LimitWallType.NORTH, -1,  0, LimitWallType.SOUTH),
+            (LimitWallType.EAST, 0,  1, LimitWallType.WEST),
+            (LimitWallType.SOUTH, 1,  0, LimitWallType.NORTH),
+            (LimitWallType.WEST, 0, -1, LimitWallType.EAST)
+        ]
         for miner in range(miners):
+            if not self.mined_cells[miner]:
+                continue
             num_mined: int = randint(1, len(self.mined_cells[miner]))
             for _ in range(num_mined):
-                cell_mined: Cell = choice(self.mined_cells[miner])
-                [x, y] = cell_mined.position
-                openings: int = randint(0, 15)
-                new_cell: Cell | None = None
-                if (
-                    LimitWallType.NORTH
-                    not in cell_mined.limit_wall_type and
-                    openings & 8
-                ):
-                    new_cell = maze[y - 1][x]
-                    if self._try_cell_fusion(new_cell, miner):
-                        cell_mined.walls.north = False
-                        new_cell.walls.south = False
-                if (
-                    LimitWallType.EAST
-                    not in cell_mined.limit_wall_type and
-                    openings & 4
-                ):
-                    new_cell = maze[y][x + 1]
-                    if self._try_cell_fusion(new_cell, miner):
-                        cell_mined.walls.east = False
-                        new_cell.walls.west = False
-                if (
-                    LimitWallType.SOUTH
-                    not in cell_mined.limit_wall_type and
-                    openings & 2
-                ):
-                    new_cell = maze[y + 1][x]
-                    if self._try_cell_fusion(new_cell, miner):
-                        cell_mined.walls.south = False
-                        new_cell.walls.north = False
-                if (
-                    LimitWallType.WEST
-                    not in cell_mined.limit_wall_type and
-                    openings & 1
-                ):
-                    new_cell = maze[y][x - 1]
-                    if self._try_cell_fusion(new_cell, miner):
-                        cell_mined.walls.west = False
-                        new_cell.walls.east = False
-                if new_cell:
-                    cell_mined.encode_walls()
-                    new_cell.encode_walls()
+                x: int
+                y: int
+                cell_mined: MinerCell = choice(self.mined_cells[miner])
+                if cell_mined.is_dead:
+                    continue
+                x, y = cell_mined.cell.position
+                start_dir = randint(0, 3)
+                step = 1 if randint(0, 1) == 0 else -1
+                mined_successfully = False
+                for i in range(4):
+                    current_dir_index = (start_dir + (i * step)) % 4
+                    [
+                        limit,
+                        dy, dx,
+                        opposite_limit
+                    ] = DIRECTIONS[current_dir_index]
+
+                    if limit not in cell_mined.cell.limit_wall_type:
+                        new_cell = maze[y + dy][x + dx]
+                        if self._try_cell_fusion(new_cell, miner):
+                            setattr(
+                                cell_mined.cell.walls,
+                                limit.name.lower(),
+                                False
+                            )
+                            setattr(
+                                new_cell.walls,
+                                opposite_limit.name.lower(),
+                                False
+                            )
+                            cell_mined.cell.encode_walls()
+                            new_cell.encode_walls()
+                            mined_successfully = True
+                            break
+                if not mined_successfully:
+                    cell_mined.is_dead = True
 
     def _try_cell_fusion(self, adjacent_cell: Cell, miner: int) -> bool:
-        if CellType.FORTY_TWO not in adjacent_cell.cell_type:
-            if adjacent_cell in self.valid_cells:
-                adjacent_cell.miner_id = miner
-                self.mined_cells[miner].append(adjacent_cell)
-                self.valid_cells.remove(adjacent_cell)
+        if CellType.FORTY_TWO in adjacent_cell.cell_type:
+            return False
+        x, y = adjacent_cell.position
+        if self.miner_map[y][x] is None:
+            self.miner_map[y][x] = miner
+            adjacent_cell.zone_id = miner
+            self.mined_cells[miner].append(MinerCell(adjacent_cell))
+            return True
+        else:
+            leader_a = self._get_leader(miner)
+            leader_b = self._get_leader(self.miner_map[y][x])
+            if leader_a != leader_b:
+                self.families[leader_b] = leader_a
                 return True
-            elif adjacent_cell.miner_id is not None:
-                leader_a = self._get_leader(miner)
-                leader_b = self._get_leader(adjacent_cell.miner_id)
-                if leader_a != leader_b:
-                    self.families[leader_b] = leader_a
-                    return True
         return False
 
     def _get_leader(self, m_id: int) -> int:

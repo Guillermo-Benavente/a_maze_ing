@@ -5,7 +5,7 @@ from .wall import Wall
 class Cell():
     hexadecimal: str
     binary: int
-    miner_id: int | None
+    zone_id: int | None
     position: tuple[int, int]
     cell_type: list[CellType]
     limit_wall_type: list[LimitWallType]
@@ -14,7 +14,7 @@ class Cell():
     def __init__(self, position: tuple[int, int]) -> None:
         self.position = position
         self.binary = 0
-        self.miner_id = None
+        self.zone_id = None
         self.cell_type = []
         self.walls = Wall()
         self.limit_wall_type = []
