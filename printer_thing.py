@@ -118,16 +118,12 @@ class Drawer():
                     self.m.mlx_do_sync(self.m.mlx_ptr)
                     self.__undrawway(cord)
                     sleep(0.03125)
-                    self.m.mlx_put_image_to_window(self.m.mlx_ptr,
-                                                self.win, self.img, 10, 10)
-                    self.m.mlx_do_sync(self.m.mlx_ptr)
                 self.content = self.maze.solution
             if key == 52:
                 for i in self.maze.algoritm["algoritm"]():
                     pass
                 if len(self.maze.algoritm["list"]()) != 0:
                     self.solution = self.maze.algoritm["sorter"]()
-            print("Drawer")
             self.__draw_maze()
             self.__drawway(self.__obtencoord(self.maze.data.ENTRY, self.maze.data.EXIT, self.content))
             self.m.mlx_put_image_to_window(self.m.mlx_ptr,
