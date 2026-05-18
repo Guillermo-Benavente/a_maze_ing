@@ -12,8 +12,14 @@ class MazeGenerator():
 
     def __init__(self, data: Data) -> None:
         from .maze_miner import MazeMiner
-        self.maze = []
-        self.valid_cells = set()
+        self.maze = [
+            [
+                Cell((width, height))
+                for width in range(data.WIDTH)
+            ]
+            for height in range(data.HEIGHT)
+        ]
+        self.valid_cells = {cell for row in self.maze for cell in row}
         self.data = data
         self._create_maze()
         MazeMiner(self)
@@ -59,89 +65,70 @@ class MazeGenerator():
                 start_width = (self.data.WIDTH // 2) - 3
             if self.data.HEIGHT != 6:
                 start_height = (self.data.HEIGHT // 2) - 2
-        for height in range(self.data.HEIGHT):
-            cells: list[Cell] = []
-            for width in range(self.data.WIDTH):
-                cell: Cell = Cell((width, height))
-                self._search_inout(cell)
-                self._create_limits(cell)
-                if self.data.WIDTH > 7 and self.data.HEIGHT > 5:
-                    self._create_forty_two(
-                        cell,
-                        start_height,
-                        start_width
-                    )
-                if CellType.FORTY_TWO not in cell.cell_type:
-                    self.valid_cells.add(cell)
-                cells.append(cell)
-            self.maze.append(cells)
+        self._search_inout()
+        self._create_limits()
+        self._create_forty_two(start_height, start_width)
 
     def _create_forty_two(
         self,
-        cell: Cell,
         start_height: int,
         start_width: int
     ) -> None:
-        height: int = cell.position[1]
-        width: int = cell.position[0]
-        if (
-            start_height <= height < start_height + 5 and
-            start_width <= width < start_width + 7
-        ):
-            i: int = height - start_height
-            j: int = width - start_width
-            if (
-                    j != 3 and
-                    not (i == 0 and (j == 1 or j == 2)) and
-                    not (i == 1 and 1 <= j <= 5) and
-                    not (i == 3 and j in [0, 1, 5, 6]) and
-                    not (i == 4 and (j == 0 or j == 1))
-            ):
+        if self.data.WIDTH <= 7 or self.data.HEIGHT <= 5:
+            return
+        for y in range(5):
+            for x in range(7):
+                height = start_height + y
+                width = start_width + x
+                cell = self.maze[height][width]
                 if (
-                    CellType.ENTRY in cell.cell_type or
-                    CellType.EXIT in cell.cell_type
+                    x != 3 and
+                    not (y == 0 and (x == 1 or x == 2)) and
+                    not (y == 1 and 1 <= x <= 5) and
+                    not (y == 3 and x in [0, 1, 5, 6]) and
+                    not (y == 4 and (x == 0 or x == 1))
                 ):
-                    raise Exception(
-                        (
-                            "Entry or exit coordinates"
-                            " collide with the '42' pattern zone."
+                    if (
+                        CellType.ENTRY in cell.cell_type or
+                        CellType.EXIT in cell.cell_type
+                    ):
+                        raise Exception(
+                            (
+                                "Entry or exit coordinates"
+                                " collide with the '42' pattern zone."
+                            )
                         )
-                    )
-                else:
                     cell.cell_type.append(CellType.FORTY_TWO)
+                    self.valid_cells.discard(cell)
 
-    def _create_limits(self, cell: Cell) -> None:
-        height: int = cell.position[1]
-        width: int = cell.position[0]
-        if (
-            height == 0 or
-            width == 0 or
-            height == self.data.HEIGHT - 1 or
-            width == self.data.WIDTH - 1
-        ):
-            cell.cell_type.append(CellType.LIMIT)
-            if height == 0:
-                cell.limit_wall_type.append(LimitWallType.NORTH)
-            if width == 0:
-                cell.limit_wall_type.append(LimitWallType.WEST)
-            if height == self.data.HEIGHT - 1:
-                cell.limit_wall_type.append(LimitWallType.SOUTH)
-            if width == self.data.WIDTH - 1:
-                cell.limit_wall_type.append(LimitWallType.EAST)
+    def _create_limits(self) -> None:
+        height: int = self.data.HEIGHT
+        width: int = self.data.WIDTH
 
-    def _search_inout(self, cell: Cell) -> None:
-        height: int = cell.position[1]
-        width: int = cell.position[0]
-        if (
-            self.data.ENTRY[0] == width and
-            self.data.ENTRY[1] == height
-        ):
-            cell.cell_type.append(CellType.ENTRY)
-        elif (
-            self.data.EXIT[0] == width and
-            self.data.EXIT[1] == height
-        ):
-            cell.cell_type.append(CellType.EXIT)
+        for x in range(width):
+            north: Cell = self.maze[0][x]
+            south: Cell = self.maze[height - 1][x]
+            north.cell_type.append(CellType.LIMIT)
+            north.limit_wall_type.append(LimitWallType.NORTH)
+            south.cell_type.append(CellType.LIMIT)
+            south.limit_wall_type.append(LimitWallType.SOUTH)
+        for y in range(height):
+            west: Cell = self.maze[y][0]
+            east: Cell = self.maze[y][width - 1]
+            west.cell_type.append(CellType.LIMIT)
+            west.limit_wall_type.append(LimitWallType.WEST)
+            east.cell_type.append(CellType.LIMIT)
+            east.limit_wall_type.append(LimitWallType.EAST)
+
+    def _search_inout(self) -> None:
+        x_entry: int
+        y_entry: int
+        x_exit: int
+        y_exit: int
+        x_entry, y_entry = self.data.ENTRY
+        x_exit, y_exit = self.data.EXIT
+        self.maze[y_entry][x_entry].cell_type.append(CellType.ENTRY)
+        self.maze[y_exit][x_exit].cell_type.append(CellType.EXIT)
 
     def view_maze(self) -> None:
         for height in range(self.data.HEIGHT):
