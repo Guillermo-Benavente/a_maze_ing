@@ -1,39 +1,34 @@
+from typing import Any
+from random import randint
+from sys import argv, maxsize as maxs
+from time import sleep
 from mlx import Mlx
 from maze.cell import Cell
 from maze.enums import CellType
 from colors import All_colors, ColorCell
 from parser_config import lector
 from maze.maze_generator import MazeGenerator
-from typing import Any
-from random import randint
-from sys import argv
-from sys import maxsize as maxs
-from time import sleep
-
 
 class Drawer():
 
     maze: MazeGenerator
-    mapa: list[list[Cell]]
-    ROWS: int
-    COLS: int
     WIDTH: int
     HEIGHT: int
     CELL_SIZE: int
     ALL_COLORS = All_colors()
     m: Mlx
 
-    def __init__(self, mapa: MazeGenerator) -> None:
-        self.maze = mapa
-        self.mapa = mapa.maze
-        self.ROWS = len(mapa.maze)
-        self.COLS = len(mapa.maze[0])
+    def __init__(self, maze: MazeGenerator) -> None:
+        self.maze = maze
         self.CELL_SIZE = 40
-        self.WIDTH = len(mapa.maze[0]) * self.CELL_SIZE
-        self.HEIGHT = len(mapa.maze) * self.CELL_SIZE
+        self.WIDTH = maze.data.WIDTH * self.CELL_SIZE
+        self.HEIGHT = maze.data.HEIGHT * self.CELL_SIZE
 
-    def __put_pixel(self, col: tuple[int, int, int, int],
-                    idx: int) -> None:
+    def __put_pixel(
+            self,
+            col: tuple[int, int, int, int],
+            idx: int
+    ) -> None:
         self.data[idx] = col[0]
         self.data[idx + 1] = col[1]
         self.data[idx + 2] = col[2]
@@ -47,7 +42,7 @@ class Drawer():
             self.__put_pixel(self.ALL_COLORS.get_color(
                 ColorCell.WALL.value), idx)
 
-    def __print_background(self, py, px, v):
+    def __print_background(self, py: int, px: int, v: Cell):
         for dy in range(self.CELL_SIZE):
             for dx in range(self.CELL_SIZE):
                 idx = (py + dy) * self.size_line + (px + dx) * 4
@@ -65,9 +60,9 @@ class Drawer():
                         ColorCell.FLOOR.value), idx)
 
     def __draw_maze(self) -> None:
-        for y in range(self.ROWS):
-            for x in range(self.COLS):
-                v = self.mapa[y][x]
+        for y in range(self.maze.data.HEIGHT):
+            for x in range(self.maze.data.WIDTH):
+                v = self.maze.maze[y][x]
                 px = x * self.CELL_SIZE
                 py = y * self.CELL_SIZE
 
@@ -103,19 +98,26 @@ class Drawer():
                 dic = lector(argv[1])
                 if not isinstance(dic.get("SEED"), str):
                     self.maze.data.SEED = randint(1, maxs)
-                    opten = MazeGenerator(self.maze.data)
-                    self.mapa = opten.maze
-                    self.maze = opten
+                    self.maze = MazeGenerator(self.maze.data)
                     self.content = self.maze.solution
             if key == 51:
                 self.__draw_maze()
                 for i in self.maze.algoritm["algoritm"]():
                     self.content = i
-                    cord = self.__obtencoord(self.maze.data.ENTRY, self.maze.data.EXIT, self.content)
+                    cord = self.__obtencoord(
+                        self.maze.data.ENTRY,
+                        self.maze.data.EXIT,
+                        self.content
+                    )
                     self.__drawway(cord)
-                    self.m.mlx_put_image_to_window(self.m.mlx_ptr,
-                                                self.win, self.img, 10, 10)
-                    self.m.mlx_do_sync(self.m.mlx_ptr)
+                    self.mlx.mlx_put_image_to_window(
+                        self.mlx.mlx_ptr,
+                        self.win,
+                        self.img,
+                        10,
+                        10
+                    )
+                    self.mlx.mlx_do_sync(self.mlx.mlx_ptr)
                     self.__undrawway(cord)
                     sleep(0.03125)
                 self.content = self.maze.solution
@@ -125,13 +127,27 @@ class Drawer():
                 if len(self.maze.algoritm["list"]()) != 0:
                     self.solution = self.maze.algoritm["sorter"]()
             self.__draw_maze()
-            self.__drawway(self.__obtencoord(self.maze.data.ENTRY, self.maze.data.EXIT, self.content))
-            self.m.mlx_put_image_to_window(self.m.mlx_ptr,
-                                           self.win, self.img, 10, 10)
+            self.__drawway(self.__obtencoord(
+                self.maze.data.ENTRY,
+                self.maze.data.EXIT,
+                self.content
+            ))
+            self.mlx.mlx_put_image_to_window(
+                self.mlx.mlx_ptr,
+                self.win,
+                self.img,
+                10,
+                10
+            )
         if key == 65307:
             param.mlx_loop_exit(param.mlx_ptr)
 
-    def __obtencoord(self, enter: tuple[int, int], exit: tuple[int, int], direc: str | list[str]) -> set[tuple[int, int]]:
+    def __obtencoord(
+            self,
+            enter: tuple[int, int],
+            exit: tuple[int, int],
+            direc: str | list[str]
+    ) -> set[tuple[int, int]]:
         movements = {
             "N": (0, -1),
             "W": (-1, 0),
@@ -155,12 +171,11 @@ class Drawer():
                     sol.add((x, y))
                 else:
                     x -= opex
-                    y -= opey     
+                    y -= opey
         return sol
-    
+
     def __drawway(self, long: set[tuple[int, int]]) -> None:
         for x, y in long:
-            v = self.mapa[y][x]
             px = (x * self.CELL_SIZE) + int(self.CELL_SIZE * 0.15)
             py = (y * self.CELL_SIZE) + int(self.CELL_SIZE * 0.15)
 
@@ -169,10 +184,9 @@ class Drawer():
                     idx = (py + dy) * self.size_line + (px + dx) * 4
                     self.__put_pixel(self.ALL_COLORS.get_color(
                         ColorCell.WAY.value), idx)
-    
+
     def __undrawway(self, long: set[tuple[int, int]]) -> None:
         for x, y in long:
-            v = self.mapa[y][x]
             px = (x * self.CELL_SIZE) + int(self.CELL_SIZE * 0.15)
             py = (y * self.CELL_SIZE) + int(self.CELL_SIZE * 0.15)
 
@@ -181,24 +195,39 @@ class Drawer():
                     idx = (py + dy) * self.size_line + (px + dx) * 4
                     self.__put_pixel(self.ALL_COLORS.get_color(
                         ColorCell.FLOOR.value), idx)
-    
+
     def visualizer(self) -> None:
-        self.m = Mlx()
-        self.m.mlx_ptr = self.m.mlx_init()
-        self.win = self.m.mlx_new_window(self.m.mlx_ptr,
-                                         self.WIDTH + 20,
-                                         self.HEIGHT + 20,
-                                         "Laberinto")
-        self.img = self.m.mlx_new_image(self.m.mlx_ptr, self.WIDTH,
-                                        self.HEIGHT)
-
-        self.data, _, self.size_line, _ = self.m.mlx_get_data_addr(self.img)
-
+        self.mlx = Mlx()
+        self.mlx.mlx_ptr = self.mlx.mlx_init()
+        self.win = self.mlx.mlx_new_window(
+            self.mlx.mlx_ptr,
+            self.WIDTH + 20,
+            self.HEIGHT + 20,
+            "Maze"
+        )
+        self.img = self.mlx.mlx_new_image(
+            self.mlx.mlx_ptr,
+            self.WIDTH,
+            self.HEIGHT
+        )
+        [
+            self.data, _,
+            self.size_line, _
+        ] = self.mlx.mlx_get_data_addr(self.img)
         self.content = self.maze.solution
         self.__draw_maze()
-        self.__drawway(self.__obtencoord(self.maze.data.ENTRY, self.maze.data.EXIT, self.content))
+        self.__drawway(self.__obtencoord(
+            self.maze.data.ENTRY,
+            self.maze.data.EXIT,
+            self.content
+        ))
 
-        self.m.mlx_put_image_to_window(self.m.mlx_ptr, self.win,
-                                       self.img, 10, 10)
-        self.m.mlx_key_hook(self.win, self.__key_how, self.m)
-        self.m.mlx_loop(self.m.mlx_ptr)
+        self.mlx.mlx_put_image_to_window(
+            self.mlx.mlx_ptr,
+            self.win,
+            self.img,
+            10,
+            10
+        )
+        self.mlx.mlx_key_hook(self.win, self.__key_how, self.mlx)
+        self.mlx.mlx_loop(self.mlx.mlx_ptr)

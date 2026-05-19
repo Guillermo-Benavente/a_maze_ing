@@ -5,6 +5,8 @@ from .enums import CellType, LimitWallType
 
 
 class MinerCell:
+    cell: Cell
+    is_dead: bool
     __slots__ = ('cell', 'is_dead')
 
     def __init__(self, cell: Cell) -> None:

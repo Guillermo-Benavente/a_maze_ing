@@ -1,13 +1,16 @@
-from typing import TextIO
+from typing import TextIO, Callable, Any
 from sys import stdout, stderr
 from parser_config import Data
 from .enums import CellType, LimitWallType
 from .cell import Cell
 
 
+
 class MazeGenerator():
     maze: list[list[Cell]]
     data: Data
+    solution: str | None
+    algoritm: dict[str, Callable[..., Any]]
 
     def __init__(self, data: Data) -> None:
         from .maze_miner import MazeMiner
@@ -22,7 +25,7 @@ class MazeGenerator():
         self._create_maze()
         MazeMiner(self)
         self.algoritm = self.data.ALGORITM(self.maze)
-        for i in self.algoritm["algoritm"]():
+        for _ in self.algoritm["algoritm"]():
             pass
         if len(self.algoritm["list"]()) != 0:
             self.solution = self.algoritm["sorter"]()
