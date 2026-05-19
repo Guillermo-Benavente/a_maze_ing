@@ -26,8 +26,7 @@ def generateweight(local: tuple[int, int], exits: tuple[int, int]) -> int:
 
 def operate2(num: Cell, thinks: list[tuple[str, int, int]],
              order: list[tuple[str, int, int]],
-             exits: tuple[int, int], pos: tuple[int, int],
-             weight: int
+             exits: tuple[int, int], pos: tuple[int, int]
              ) -> list[tuple[str, int, int]]:
     operations: list[dict[str, Any]] = []
     lis = [
@@ -38,7 +37,7 @@ def operate2(num: Cell, thinks: list[tuple[str, int, int]],
     ]
 
     for n in range(len(thinks)):
-        _, x, y = thinks[n]
+        x, y = pos
         operations.append({"weight": generateweight((x, y), exits),
                            "thinks": thinks[n], "operate": lis[n]})
 
@@ -76,6 +75,7 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
         order = operate(num, dirs, order)
         for te, xx, yy in order:
             yield from algoritm(text + te, x + xx, y + yy, visited)
+        visited.remove((x, y))
 
     def sorter() -> str:
         sol = sorted(texts, key=lambda x: len(x))
@@ -117,10 +117,10 @@ def found_weight(enter: tuple[int, int], exits: tuple[int, int],
             return
         visited.add((x, y))
         num = maps[y][x]
-        order = operate2(num, dirs, order, (exix, exiy),
-                         (x, y), int(abs(x - exix) + abs(y - exiy)))
+        order = operate2(num, dirs, order, (exix, exiy), (x, y))
         for te, xx, yy in order:
             yield from algoritm(text + te, x + xx, y + yy, visited)
+        visited.remove((x, y))
 
     def sorter() -> str:
         return lista()[0]
