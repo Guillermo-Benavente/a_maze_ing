@@ -11,7 +11,7 @@ class MazeGenerator():
     maze: list[list[Cell]]
     data: Data
     solution: str | None
-    algorithm: dict[str, Callable[..., Any]]
+    algoritm: dict[str, Callable[..., Any]]
     special_cells: list[tuple[int, int, Cell]]
 
     def __init__(self, data: Data) -> None:
@@ -27,12 +27,13 @@ class MazeGenerator():
         self.special_cells = []
         self._create_maze()
         MazeMiner(self)
-        self.algorithm = self.data.ALGORITM(self.maze)
-        deque(self.algorithm["algorithm"](), maxlen=0)
-        if len(self.algorithm["list"]()) != 0:
-            self.solution = self.algorithm["sorter"]()
-        else:
-            self.solution = None
+        #self.algoritm = self.data.ALGORITM(self.maze)
+        #deque(self.algoritm["algoritm"](), maxlen=0)
+        #if len(self.algoritm["list"]()) != 0:
+        #    self.solution = self.algoritm["sorter"]()
+        #else:
+        #    self.solution = None
+        self.solution = ""
         self._generatedoc()
 
     def _generatedoc(self) -> None:

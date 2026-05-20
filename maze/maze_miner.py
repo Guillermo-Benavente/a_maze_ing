@@ -54,6 +54,8 @@ class MazeMiner():
         for miner, position_miner in enumerate(initial_cells):
             position_miner.zone_id = miner
             self.mined_cells.append([MinerCell(position_miner)])
+            x, y = position_miner.position
+            self.miner_map[y][x] = miner
 
     def _maze_mining(self, miners: int) -> None:
         maze: list[list[Cell]] = self.maze_generator.maze

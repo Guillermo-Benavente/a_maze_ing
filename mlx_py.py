@@ -16,7 +16,7 @@ class FlatCanvas:
         height: int,
         color: tuple[int, int, int, int]
     ) -> None:
-        color_row = list(color) * width
+        color_row: bytes = bytes(color) * width
         row_bytes_len = width * self.BYTES_PER_PIXEL
         for current_row in range(height):
             start_byte_address = current_row * self.line_size
@@ -30,7 +30,7 @@ class FlatCanvas:
         height: int, 
         color: tuple[int, int, int, int]
     ) -> None:
-        color_row: list[int] = list(color) * width
+        color_row: bytes = bytes(color) * width
         row_bytes_len: int = width * self.BYTES_PER_PIXEL
         for current_row in range(height):
             start_byte_address = (
@@ -55,12 +55,13 @@ class FlatCanvas:
         length: int, 
         color: tuple[int, int, int, int]
     ) -> None:
+        color_bytes: bytes = bytes(color)
         for current_row in range(length):
             start_byte_address = (
                 (origin_y + current_row) * self.line_size
                 + origin_x * self.BYTES_PER_PIXEL
             )
-            self.bytes[start_byte_address : start_byte_address + self.BYTES_PER_PIXEL] = color
+            self.bytes[start_byte_address : start_byte_address + self.BYTES_PER_PIXEL] = color_bytes
 
 
 class MlxPy:

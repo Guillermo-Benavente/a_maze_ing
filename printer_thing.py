@@ -1,4 +1,3 @@
-from typing import Any
 from random import randint
 from sys import argv, maxsize as maxs
 from time import sleep
@@ -12,10 +11,9 @@ from parser_config import lector
 from maze.maze_generator import MazeGenerator
 
 class Drawer():
-
     WIDTH: int
     HEIGHT: int
-    CELL_SIZE: int
+    CELL_SIZE: int = 8
     ALL_COLORS = All_colors()
     MOVEMENTS = {
         "N": (0, -1),
@@ -29,19 +27,8 @@ class Drawer():
 
     def __init__(self, maze: MazeGenerator) -> None:
         self.maze = maze
-        self.CELL_SIZE = 40
         self.WIDTH = maze.data.WIDTH * self.CELL_SIZE
         self.HEIGHT = maze.data.HEIGHT * self.CELL_SIZE
-
-    def __put_pixel(
-        self,
-        col: tuple[int, int, int, int],
-        idx: int
-    ) -> None:
-        self.mlx.flat_canvas.bytes[idx] = col[0]
-        self.mlx.flat_canvas.bytes[idx + 1] = col[1]
-        self.mlx.flat_canvas.bytes[idx + 2] = col[2]
-        self.mlx.flat_canvas.bytes[idx + 3] = col[3]
 
     def __get_cell_color(self, cell: Cell, is_wall: bool = False) -> tuple[int, int, int, int]:
         if CellType.FORTY_TWO in cell.cell_type:
@@ -67,6 +54,7 @@ class Drawer():
 
     def __draw_maze(self) -> None:
         canvas: FlatCanvas = self.mlx.flat_canvas
+        WALL_THICKNESS: int = 1
         default_floor = self.ALL_COLORS.get_color(ColorCell.FLOOR.value)
         canvas.fill_all(
             self.maze.data.WIDTH * self.CELL_SIZE, 
@@ -81,30 +69,34 @@ class Drawer():
                 origin_y = y * self.CELL_SIZE
                 wall_color = self.__get_cell_color(cell, True)
                 if cell.walls.north:
-                    canvas.draw_horizontal_line(
+                    canvas.draw_rectangle(
                         origin_x,
                         origin_y,
                         self.CELL_SIZE,
+                        WALL_THICKNESS,
                         wall_color
                     )
                 if cell.walls.west:
-                    canvas.draw_vertical_line(
+                    canvas.draw_rectangle(
                         origin_x,
                         origin_y,
+                        WALL_THICKNESS,
                         self.CELL_SIZE,
                         wall_color
                     )
                 if cell.walls.south:
-                    canvas.draw_horizontal_line(
+                    canvas.draw_rectangle(
                         origin_x,
-                        origin_y + self.CELL_SIZE - 1,
+                        origin_y + self.CELL_SIZE - WALL_THICKNESS,
                         self.CELL_SIZE,
+                        WALL_THICKNESS,
                         wall_color
                     )
                 if cell.walls.east:
-                    canvas.draw_vertical_line(
-                        origin_x + self.CELL_SIZE - 1,
+                    canvas.draw_rectangle(
+                        origin_x + self.CELL_SIZE - WALL_THICKNESS,
                         origin_y,
+                        WALL_THICKNESS,
                         self.CELL_SIZE,
                         wall_color
                     )
@@ -121,7 +113,7 @@ class Drawer():
                     self.content = self.maze.solution
             elif key == 51:
                 self.__draw_maze()
-                for algorithm_step in self.maze.algorithm["algorithm"]():
+                for algorithm_step in self.maze.algoritm["algoritm"]():
                     self.content = algorithm_step
                     path_coords = self.__get_path_coords(
                         self.maze.data.ENTRY,
@@ -135,9 +127,9 @@ class Drawer():
                     sleep(0.03125)
                 self.content = self.maze.solution
             elif key == 52:
-                deque(self.maze.algorithm["algorithm"](), maxlen=0)
-                if len(self.maze.algorithm["list"]()) != 0:
-                    self.solution = self.maze.algorithm["sorter"]()
+                deque(self.maze.algoritm["algoritm"](), maxlen=0)
+                if len(self.maze.algoritm["list"]()) != 0:
+                    self.solution = self.maze.algoritm["sorter"]()
             self.__draw_maze()
             self.__drawway(self.__get_path_coords(
                 self.maze.data.ENTRY,
@@ -145,7 +137,7 @@ class Drawer():
                 self.content
             ))
             self.mlx.mlx_put_image_to_window(self.MARGIN)
-        if key in (65307):
+        if key == 65307:
             mlx_param.mlx_loop_exit(mlx_param.mlx_ptr)
 
     def __get_path_coords(
