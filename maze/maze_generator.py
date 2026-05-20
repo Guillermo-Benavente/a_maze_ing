@@ -1,5 +1,6 @@
 from typing import TextIO, Callable, Any
 from sys import stdout, stderr
+from collections import deque
 from parser_config import Data
 from .enums import CellType, LimitWallType
 from .cell import Cell
@@ -10,7 +11,8 @@ class MazeGenerator():
     maze: list[list[Cell]]
     data: Data
     solution: str | None
-    algoritm: dict[str, Callable[..., Any]]
+    algorithm: dict[str, Callable[..., Any]]
+    special_cells: list[tuple[int, int, Cell]]
 
     def __init__(self, data: Data) -> None:
         from .maze_miner import MazeMiner
@@ -22,13 +24,13 @@ class MazeGenerator():
             for height in range(data.HEIGHT)
         ]
         self.data = data
+        self.special_cells = []
         self._create_maze()
         MazeMiner(self)
-        self.algoritm = self.data.ALGORITM(self.maze)
-        for _ in self.algoritm["algoritm"]():
-            pass
-        if len(self.algoritm["list"]()) != 0:
-            self.solution = self.algoritm["sorter"]()
+        self.algorithm = self.data.ALGORITM(self.maze)
+        deque(self.algorithm["algorithm"](), maxlen=0)
+        if len(self.algorithm["list"]()) != 0:
+            self.solution = self.algorithm["sorter"]()
         else:
             self.solution = None
         self._generatedoc()
@@ -100,6 +102,7 @@ class MazeGenerator():
                             )
                         )
                     cell.cell_type.append(CellType.FORTY_TWO)
+                    self.special_cells.append((width, height, cell))
 
     def _create_limits(self) -> None:
         height: int = self.data.HEIGHT
@@ -127,8 +130,12 @@ class MazeGenerator():
         y_exit: int
         x_entry, y_entry = self.data.ENTRY
         x_exit, y_exit = self.data.EXIT
-        self.maze[y_entry][x_entry].cell_type.append(CellType.ENTRY)
-        self.maze[y_exit][x_exit].cell_type.append(CellType.EXIT)
+        entry_cell = self.maze[y_entry][x_entry]
+        exit_cell = self.maze[y_exit][x_exit]
+        entry_cell.cell_type.append(CellType.ENTRY)
+        exit_cell.cell_type.append(CellType.EXIT)
+        self.special_cells.append((x_entry, y_entry, entry_cell))
+        self.special_cells.append((x_exit, y_exit, exit_cell))
 
     def view_maze(self) -> None:
         for height in range(self.data.HEIGHT):
