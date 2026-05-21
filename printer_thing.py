@@ -6,7 +6,7 @@ from mlx import Mlx
 from mlx_py import MlxPy, FlatCanvas
 from maze.cell import Cell
 from maze.enums import CellType
-from colors import All_colors, ColorCell
+from colors import AllColors, ColorCell
 from parser_config import lector
 from maze.maze_generator import MazeGenerator
 
@@ -14,7 +14,7 @@ class Drawer():
     WIDTH: int
     HEIGHT: int
     CELL_SIZE: int = 8
-    ALL_COLORS = All_colors()
+    ALL_COLORS = AllColors()
     MOVEMENTS = {
         "N": (0, -1),
         "W": (-1, 0),
