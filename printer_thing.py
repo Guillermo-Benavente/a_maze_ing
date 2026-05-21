@@ -1,4 +1,3 @@
-from random import randint
 from sys import argv, maxsize as maxs
 from time import sleep
 from collections import deque
@@ -7,7 +6,7 @@ from mlx_py import MlxPy, FlatCanvas
 from maze.cell import Cell
 from maze.enums import CellType
 from colors import AllColors, ColorCell
-from parser_config import lector
+from parser_config import lector, Data
 from maze.maze_generator import MazeGenerator
 import os
 
@@ -123,11 +122,13 @@ class Drawer():
             if key == 49:
                 self.ALL_COLORS.all_colors()
             elif key == 50:
-                config_data = lector(argv[1])
-                if not isinstance(config_data.get("SEED"), str):
-                    self.maze.data.SEED = randint(1, maxs)
-                    self.maze = MazeGenerator(self.maze.data)
-                    self.content = self.maze.solution
+                self.mlx.close_window()
+                mlx_param.mlx_loop_exit(mlx_param.mlx_ptr)
+                data = Data.model_validate(lector(argv[1]))
+                maze: MazeGenerator = MazeGenerator(data)
+                draw = Drawer(maze)
+                draw.visualizer()
+                return
             elif key == 51:
                 self.__draw_maze()
                 for algorithm_step in self.maze.algoritm["algoritm"]():
@@ -155,6 +156,7 @@ class Drawer():
             ))
             self.mlx.mlx_put_image_to_window(self.MARGIN)
         if key == 65307:
+            self.mlx.close_window()
             mlx_param.mlx_loop_exit(mlx_param.mlx_ptr)
 
     def __get_path_coords(

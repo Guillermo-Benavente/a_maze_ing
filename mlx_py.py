@@ -71,10 +71,20 @@ class MlxPy:
     image: Any
     flat_canvas: FlatCanvas
 
+
     def __init__(self) -> None:
         self.mlx = Mlx()
         self.mlx_ptr = self.mlx.mlx_init()
         self.mlx.mlx_ptr = self.mlx_ptr
+
+    def close_window(self) -> None:
+        """Destruye la ventana y la imagen actuales para liberar memoria."""
+        if hasattr(self, 'image') and self.image:
+            self.mlx.mlx_destroy_image(self.mlx_ptr, self.image)
+            self.image = None
+        if hasattr(self, 'window') and self.window:
+            self.mlx.mlx_destroy_window(self.mlx_ptr, self.window)
+            self.window = None
 
     def new_window(
         self,
