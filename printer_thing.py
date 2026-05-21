@@ -9,11 +9,12 @@ from maze.enums import CellType
 from colors import AllColors, ColorCell
 from parser_config import lector
 from maze.maze_generator import MazeGenerator
+import os
 
 class Drawer():
     WIDTH: int
     HEIGHT: int
-    CELL_SIZE: int = 8
+    WALL_THICKNESS: int
     ALL_COLORS = AllColors()
     MOVEMENTS = {
         "N": (0, -1),
@@ -27,8 +28,25 @@ class Drawer():
 
     def __init__(self, maze: MazeGenerator) -> None:
         self.maze = maze
+        ancho = int(os.environ.get("SCREEN_WIDTH", 1920))
+        alto = int(os.environ.get("SCREEN_HEIGHT", 1080))
+        self.__optimize_size(maze, ancho, alto)
         self.WIDTH = maze.data.WIDTH * self.CELL_SIZE
         self.HEIGHT = maze.data.HEIGHT * self.CELL_SIZE
+
+    def __optimize_size(self, maze: MazeGenerator, tkwidth: int, tkheight: int,  size: int = 3) -> None:
+        width = maze.data.WIDTH * size
+        height = maze.data.HEIGHT * size
+        if tkheight > height and tkwidth > width:
+            self.__optimize_size(maze, tkwidth, tkheight, size + 1)
+        elif tkheight < height or tkwidth < width:
+            self.CELL_SIZE = size - 1
+            x = round(self.CELL_SIZE * 0.04) or 1
+            self.WALL_THICKNESS = x
+        else:
+            self.CELL_SIZE = size
+            x = round(self.CELL_SIZE * 0.04) or 1
+            self.WALL_THICKNESS = x
 
     def __get_cell_color(self, cell: Cell, is_wall: bool = False) -> tuple[int, int, int, int]:
         if CellType.FORTY_TWO in cell.cell_type:
@@ -54,7 +72,6 @@ class Drawer():
 
     def __draw_maze(self) -> None:
         canvas: FlatCanvas = self.mlx.flat_canvas
-        WALL_THICKNESS: int = 1
         default_floor = self.ALL_COLORS.get_color(ColorCell.FLOOR.value)
         canvas.fill_all(
             self.maze.data.WIDTH * self.CELL_SIZE, 
@@ -73,30 +90,30 @@ class Drawer():
                         origin_x,
                         origin_y,
                         self.CELL_SIZE,
-                        WALL_THICKNESS,
+                        self.WALL_THICKNESS,
                         wall_color
                     )
                 if cell.walls.west:
                     canvas.draw_rectangle(
                         origin_x,
                         origin_y,
-                        WALL_THICKNESS,
+                        self.WALL_THICKNESS,
                         self.CELL_SIZE,
                         wall_color
                     )
                 if cell.walls.south:
                     canvas.draw_rectangle(
                         origin_x,
-                        origin_y + self.CELL_SIZE - WALL_THICKNESS,
+                        origin_y + self.CELL_SIZE - self.WALL_THICKNESS,
                         self.CELL_SIZE,
-                        WALL_THICKNESS,
+                        self.WALL_THICKNESS,
                         wall_color
                     )
                 if cell.walls.east:
                     canvas.draw_rectangle(
-                        origin_x + self.CELL_SIZE - WALL_THICKNESS,
+                        origin_x + self.CELL_SIZE - self.WALL_THICKNESS,
                         origin_y,
-                        WALL_THICKNESS,
+                        self.WALL_THICKNESS,
                         self.CELL_SIZE,
                         wall_color
                     )
