@@ -9,6 +9,7 @@ from colors import AllColors, ColorCell
 from parser_config import lector, Data
 from maze.maze_generator import MazeGenerator
 import os
+from pydantic import ValidationError
 
 class Drawer():
     WIDTH: int
@@ -38,7 +39,7 @@ class Drawer():
         height = maze.data.HEIGHT * size
         if tkheight > height and tkwidth > width:
             self.__optimize_size(maze, tkwidth, tkheight, size + 1)
-        elif tkheight < height or tkwidth < width:
+        elif (tkheight < height or tkwidth < width) and size != 3:
             self.CELL_SIZE = size - 1
             x = round(self.CELL_SIZE * 0.04) or 1
             self.WALL_THICKNESS = x
@@ -122,12 +123,32 @@ class Drawer():
             if key == 49:
                 self.ALL_COLORS.all_colors()
             elif key == 50:
-                self.mlx.close_window()
-                mlx_param.mlx_loop_exit(mlx_param.mlx_ptr)
-                data = Data.model_validate(lector(argv[1]))
-                maze: MazeGenerator = MazeGenerator(data)
-                draw = Drawer(maze)
-                draw.visualizer()
+                try:
+                    data = Data.model_validate(lector(argv[1]))
+                    if (
+                        data.SEED != self.maze.data.SEED or
+                        data.ENTRY != self.maze.data.ENTRY or
+                        data.EXIT != self.maze.data.EXIT or
+                        data.WIDTH != self.maze.data.WIDTH or
+                        data.HEIGHT != self.maze.data.HEIGHT or
+                        data.PERFECT != self.maze.data.PERFECT
+                       ):
+                        self.mlx.close_window()
+                        mlx_param.mlx_loop_exit(mlx_param.mlx_ptr)
+                        draw = Drawer(MazeGenerator(data))
+                        draw.visualizer()
+                except (ValidationError,
+                        ValueError,
+                        AssertionError,
+                        PermissionError
+                        ) as e:
+                    if isinstance(e, ValidationError):
+                        for error in e.errors():
+                            print(error["msg"])
+                    else:
+                        print(e)
+                except Exception as e:
+                    print(e)
                 return
             elif key == 51:
                 self.__draw_maze()
