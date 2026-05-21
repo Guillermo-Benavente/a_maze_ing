@@ -36,9 +36,10 @@ def operate2(num: Cell, thinks: list[tuple[str, int, int]],
         not num.walls.west
     ]
 
+    x, y = pos
     for n in range(len(thinks)):
-        x, y = pos
-        operations.append({"weight": generateweight((x, y), exits),
+        _, xp, yp = thinks[n]
+        operations.append({"weight": generateweight((x + xp, y + yp), exits),
                            "thinks": thinks[n], "operate": lis[n]})
 
     operations = sorted(operations, key=lambda x: x["weight"])
