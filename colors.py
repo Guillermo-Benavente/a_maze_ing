@@ -19,7 +19,7 @@ class Colors():
         self.__pos = pos
 
 
-class A_colors():
+class BaseColors():
     color: list[Colors] = []
 
     __wall = [
@@ -65,7 +65,7 @@ class A_colors():
     lista = [__wall, __floor, __entrance, __exits, __way]
 
     def __init__(self) -> None:
-        for i in A_colors.lista:
+        for i in BaseColors.lista:
             self.color.append(Colors(i))
 
     def _all_colors(self) -> None:
@@ -87,8 +87,8 @@ class A_colors():
         return (0, 0, 0, 0)
 
 
-class All_colors():
-    al: A_colors
+class AllColors():
+    al: BaseColors
     lista: list[Colors] = []
     number42 = [
         [
@@ -108,7 +108,7 @@ class All_colors():
     ]
 
     def __init__(self) -> None:
-        self.al = A_colors()
+        self.al = BaseColors()
         for i in self.number42:
             self.lista.append(Colors(i))
 
@@ -139,7 +139,7 @@ class All_colors():
         self.evol_color(5)
 
 
-class Color_cell(Enum):
+class ColorCell(Enum):
     WALL = 0
     FLOOR = 1
     ENTRY = 2

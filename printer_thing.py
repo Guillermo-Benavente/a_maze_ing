@@ -1,7 +1,7 @@
 from mlx import Mlx
 from maze.cell import Cell
 from maze.enums import CellType
-from colors import All_colors, ColorCell
+from colors import AllColors, ColorCell
 from parser_config import lector
 from maze.maze_generator import MazeGenerator
 from typing import Any
@@ -20,7 +20,7 @@ class Drawer():
     WIDTH: int
     HEIGHT: int
     CELL_SIZE: int
-    ALL_COLORS = All_colors()
+    ALL_COLORS = AllColors()
     m: Mlx
 
     def __init__(self, mapa: MazeGenerator) -> None:
