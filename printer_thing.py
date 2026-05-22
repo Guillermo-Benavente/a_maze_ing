@@ -33,6 +33,26 @@ class Drawer():
         self.__optimize_size(maze, ancho, alto)
         self.WIDTH = maze.data.WIDTH * self.CELL_SIZE
         self.HEIGHT = maze.data.HEIGHT * self.CELL_SIZE
+        self.MENU = [
+            "1 - Change all Colors",
+            "2 - Change wall Colors",
+            "3 - Change enter Colors",
+            "4 - Change way Colors",
+            "5 - Change exit Colors",
+            "6 - Change cells Colors",
+            "7 - Change 42 Colors",
+            "8 - New",
+            "9 - Animation",
+            "ESC - Exit"
+            ]
+        self.MAINMENU_HEIGHT = 20 + 20 * (len(self.MENU)//2 + 2)
+        self.MAINMENU_WIDTH = 0
+        for i in range(0, len(self.MENU), 2):
+            num = 30 + len(self.MENU[i]) * 10
+            if self.MENU[-1] != self.MENU[i]:
+                num += len(self.MENU[i + 1]) * 10 + 48
+            if num > (self.WIDTH + self.MAINMENU_WIDTH):
+                self.MAINMENU_WIDTH = num - self.WIDTH
 
     def __optimize_size(self, maze: MazeGenerator, tkwidth: int, tkheight: int,  size: int = 3) -> None:
         width = maze.data.WIDTH * size
