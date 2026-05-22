@@ -91,19 +91,24 @@ class MlxPy:
         title: str,
         width: int,
         height: int,
+        menu_w,
+        menu_h,
         margin: int = 0
     ) -> None:
-        self.window = self.mlx_new_window(title, width, height, margin)
+        self.window = self.mlx_new_window(title, width + menu_w, height + menu_h, margin)
         self.image = self.mlx_new_image(width, height)
         self.flat_canvas = self.mlx_get_data_addr()
     
     def load_window(
         self,
         callback: Any,
-        initial_point: int = 0
+        menu: Any,
+        initial_point: int = 0,
+        menu_w: int = 0
     ):
-        self.mlx_put_image_to_window(initial_point)
+        self.mlx_put_image_to_window(initial_point, menu_w)
         self.mlx_key_hook(callback)
+        self.mlx_expose_hook(menu)
         self.mlx_loop()
 
     def mlx_new_window(
@@ -139,12 +144,12 @@ class MlxPy:
         ] = self.mlx.mlx_get_data_addr(self.image)
         return FlatCanvas((bytes, size_line))
     
-    def mlx_put_image_to_window(self, initial_point: int) -> None:
+    def mlx_put_image_to_window(self, initial_point: int, menu_w: int = 0) -> None:
         self.mlx.mlx_put_image_to_window(
             self.mlx_ptr,
             self.window,
             self.image,
-            initial_point,
+            menu_w // 2 or 0 + initial_point,
             initial_point
         )
 
@@ -156,3 +161,9 @@ class MlxPy:
     
     def mlx_do_sync(self) -> None:
         self.mlx.mlx_do_sync(self.mlx_ptr)
+
+    def mlx_expose_hook(self, callback: Any) -> None:
+        self.mlx.mlx_expose_hook(self.window, callback, self.mlx)
+        
+    def mlx_string_put(self, x: int, y: int, color: Any, text: str) -> None:
+        self.mlx.mlx_string_put(self.mlx_ptr, self.window, x, y, color, text)
