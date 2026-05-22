@@ -138,6 +138,15 @@ class Drawer():
                         wall_color
                     )
 
+    def __menu(self, param: str) -> None:
+        param.mlx_put_image_to_window(param.mlx_ptr, self.win, self.img,  self.MAINMENU_WIDTH // 2, 10)
+        param.mlx_do_sync(param.mlx_ptr)
+        for i in range(0, len(self.MENU), 2):
+            y_pos = self.HEIGHT + 30 + (i //2) * 20
+            param.mlx_string_put(param.mlx_ptr, self.win, 30, y_pos, 0xFFFFFF, self.MENU[i])
+            if self.MENU[-1] != self.MENU[i]:
+                param.mlx_string_put(param.mlx_ptr, self.win, (self.WIDTH + self.MAINMENU_WIDTH) // 2, y_pos, 0xFFFFFF, self.MENU[i + 1])
+
     def __key_how(self, key: int, mlx_param: Mlx) -> None:
         if key in (49, 50, 51, 52, 53):
             if key == 49:
