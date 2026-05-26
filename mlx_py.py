@@ -109,8 +109,9 @@ class MlxPy:
         initial_point: int = 0,
         menu_w: int = 0
     ):
-        self.mlx_expose_hook(menu)
         self.mlx_put_image_to_window(initial_point, menu_w)
+        self.mlx_expose_hook(menu)
+        self.mlx_do_sync()
         self.mlx_key_hook(callback)
         self.mlx_loop()
 

@@ -1,6 +1,7 @@
 from butons import Buttons as but
 from math import sin, cos
 from datas import *
+from mlx_py import MlxPy
 
 class Player:
 
@@ -18,7 +19,8 @@ class Player:
 		self.moveSpeed = 2.5
 		self.rotationSpeed = 2 * (pi / 180)
 
-	def update(self, key: int) -> None:
+	def update(self, key: int, param: MlxPy) -> None:
+		_ = param
 		self.turnDirection = 0
 		self.walkDirection = 0
 
