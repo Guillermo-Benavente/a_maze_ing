@@ -281,8 +281,11 @@ class Drawer():
     def __undrawway(self, long: set[tuple[int, int]]) -> None:
         self.__render_path_cells(long, ColorCell.FLOOR)
 
-    def visualizer(self) -> None:
-        self.mlx = MlxPy()
+    def visualizer(self, mlx: MlxPy = None) -> None:
+        if not mlx:
+            self.mlx = MlxPy()
+        else:
+            self.mlx = mlx
         self.mlx.new_window(
             "Maze",
             self.WIDTH,

@@ -40,12 +40,14 @@ from sys import argv
 def __printmaze() -> None:
     start_time: float = perf_counter()
     data = Data.model_validate(lector(argv[1]))
+    mlx = None
     while data is not None:
         maze: MazeGenerator = MazeGenerator(data)
         draw = Drawer(maze)
-        draw.visualizer()
+        draw.visualizer(mlx)
         sleep(1)
         data = draw.new_data
+        mlx =  draw.mlx
     end_time: float = perf_counter()
     total_time: float = end_time - start_time
     print("\n¡Proceso completado!")
