@@ -10,6 +10,7 @@ from parser_config import lector, Data
 from maze.maze_generator import MazeGenerator
 import os
 from pydantic import ValidationError
+from  butons import Buttons as but
 
 class Drawer():
     WIDTH: int
@@ -28,6 +29,7 @@ class Drawer():
 
     def __init__(self, maze: MazeGenerator) -> None:
         self.maze = maze
+        self.new_data = None
         ancho = int(os.environ.get("SCREEN_WIDTH", 1920))
         alto = int(os.environ.get("SCREEN_HEIGHT", 1080))
         self.__optimize_size(maze, ancho, alto)
@@ -43,6 +45,7 @@ class Drawer():
             "7 - Change 42 Colors",
             "8 - New",
             "9 - Animation",
+            "0 - All ways",
             "ESC - Exit"
             ]
         self.MAINMENU_HEIGHT = 20 + 20 * (len(self.MENU)//2 + 2)
@@ -138,20 +141,44 @@ class Drawer():
                         wall_color
                     )
 
-    def __menu(self, param: str) -> None:
-        self.mlx.mlx_put_image_to_window(self.MARGIN)
+    def __menu(self, param: Mlx) -> None:
+        _ = param.mlx_ptr
+        self.mlx.mlx_put_image_to_window(self.MARGIN, self.MAINMENU_WIDTH)
         self.mlx.mlx_do_sync()
         for i in range(0, len(self.MENU), 2):
             y_pos = self.HEIGHT + 30 + (i //2) * 20
             self.mlx.mlx_string_put(30, y_pos, 0xFFFFFF, self.MENU[i])
             if self.MENU[-1] != self.MENU[i]:
                 self.mlx.mlx_string_put((self.WIDTH + self.MAINMENU_WIDTH) // 2, y_pos, 0xFFFFFF, self.MENU[i + 1])
+        self.mlx.mlx_do_sync()
 
     def __key_how(self, key: int, mlx_param: Mlx) -> None:
-        if key in (49, 50, 51, 52, 53):
-            if key == 49:
+        if key in (but.BUTTON_1.value,
+                   but.BUTTON_2.value,
+                   but.BUTTON_3.value,
+                   but.BUTTON_4.value,
+                   but.BUTTON_5.value,
+                   but.BUTTON_6.value,
+                   but.BUTTON_7.value,
+                   but.BUTTON_8.value,
+                   but.BUTTON_9.value,
+                   but.BUTTON_0.value
+                   ):
+            if key == but.BUTTON_1.value:
                 self.ALL_COLORS.all_colors()
-            elif key == 50:
+            if key == but.BUTTON_2.value:
+                self.ALL_COLORS.evol_color(ColorCell.WALL.value)
+            if key == but.BUTTON_3.value:
+                self.ALL_COLORS.evol_color(ColorCell.ENTRY.value)
+            if key == but.BUTTON_4.value:
+                self.ALL_COLORS.evol_color(ColorCell.WAY.value)
+            if key == but.BUTTON_5.value:
+                self.ALL_COLORS.evol_color(ColorCell.EXIT.value)
+            if key == but.BUTTON_6.value:
+                self.ALL_COLORS.evol_color(ColorCell.FLOOR.value)
+            if key == but.BUTTON_7.value:
+                self.ALL_COLORS.evol_color(ColorCell.FLOOR_42.value)
+            if key == but.BUTTON_8.value:
                 try:
                     data = Data.model_validate(lector(argv[1]))
                     if (
@@ -162,10 +189,9 @@ class Drawer():
                         data.HEIGHT != self.maze.data.HEIGHT or
                         data.PERFECT != self.maze.data.PERFECT
                        ):
+                        self.new_data = data
                         self.mlx.close_window()
-                        mlx_param.mlx_loop_exit(mlx_param.mlx_ptr)
-                        draw = Drawer(MazeGenerator(data))
-                        draw.visualizer()
+                        self.mlx.mlx_loop_exit()
                 except (ValidationError,
                         ValueError,
                         AssertionError,
@@ -179,7 +205,7 @@ class Drawer():
                 except Exception as e:
                     print(e)
                 return
-            elif key == 51:
+            if key == but.BUTTON_9.value:
                 self.__draw_maze()
                 for algorithm_step in self.maze.algoritm["algoritm"]():
                     self.content = algorithm_step
@@ -194,7 +220,7 @@ class Drawer():
                     self.__undrawway(path_coords)
                     sleep(0.03125)
                 self.content = self.maze.solution
-            elif key == 52:
+            if key == but.BUTTON_0.value:
                 deque(self.maze.algoritm["algoritm"](), maxlen=0)
                 if len(self.maze.algoritm["list"]()) != 0:
                     self.solution = self.maze.algoritm["sorter"]()
@@ -205,7 +231,7 @@ class Drawer():
                 self.content
             ))
             self.mlx.mlx_put_image_to_window(self.MARGIN)
-        if key == 65307:
+        if key == but.BUTTON_SCAPE.value:
             self.mlx.close_window()
             mlx_param.mlx_loop_exit(mlx_param.mlx_ptr)
 
@@ -273,3 +299,5 @@ class Drawer():
             self.content
         ))
         self.mlx.load_window(self.__key_how, self.__menu, self.MARGIN, self.MAINMENU_WIDTH)
+
+        self.mlx.close_window()

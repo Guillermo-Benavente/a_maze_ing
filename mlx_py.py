@@ -74,6 +74,9 @@ class MlxPy:
 
     def __init__(self) -> None:
         self.mlx = Mlx()
+        self.__create_display()
+
+    def __create_display(self) -> None:
         self.mlx_ptr = self.mlx.mlx_init()
         self.mlx.mlx_ptr = self.mlx_ptr
 
@@ -106,9 +109,9 @@ class MlxPy:
         initial_point: int = 0,
         menu_w: int = 0
     ):
+        self.mlx_expose_hook(menu)
         self.mlx_put_image_to_window(initial_point, menu_w)
         self.mlx_key_hook(callback)
-        self.mlx_expose_hook(menu)
         self.mlx_loop()
 
     def mlx_new_window(
@@ -167,3 +170,6 @@ class MlxPy:
         
     def mlx_string_put(self, x: int, y: int, color: Any, text: str) -> None:
         self.mlx.mlx_string_put(self.mlx_ptr, self.window, x, y, color, text)
+
+    def mlx_loop_exit(self) -> None:
+        self.mlx.mlx_loop_exit(self.mlx_ptr)

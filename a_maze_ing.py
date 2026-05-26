@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # from os import path, makedirs
-from time import perf_counter
+from time import perf_counter, sleep
 from parser_config import Data, lector
 from maze.maze_generator import MazeGenerator
 from pydantic import ValidationError
@@ -37,20 +37,26 @@ from sys import argv
             print(e)"""
 
 
+def __printmaze() -> None:
+    start_time: float = perf_counter()
+    data = Data.model_validate(lector(argv[1]))
+    while data is not None:
+        maze: MazeGenerator = MazeGenerator(data)
+        draw = Drawer(maze)
+        draw.visualizer()
+        sleep(1)
+        data = draw.new_data
+    end_time: float = perf_counter()
+    total_time: float = end_time - start_time
+    print("\n¡Proceso completado!")
+    print(f"Tiempo total: {total_time:.4f} segundos")
+
 if __name__ == "__main__":
     if len(argv[1:]) != 1:
         print("There aren't configuration")
         exit()
     try:
-        start_time: float = perf_counter()
-        data = Data.model_validate(lector(argv[1]))
-        maze: MazeGenerator = MazeGenerator(data)
-        draw = Drawer(maze)
-        draw.visualizer()
-        end_time: float = perf_counter()
-        total_time: float = end_time - start_time
-        print("\n¡Proceso completado!")
-        print(f"Tiempo total: {total_time:.4f} segundos")
+        __printmaze()
     except (ValidationError, ValueError, AssertionError, PermissionError) as e:
         if isinstance(e, ValidationError):
             for error in e.errors():

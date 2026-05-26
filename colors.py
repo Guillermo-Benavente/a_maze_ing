@@ -119,7 +119,8 @@ class AllColors():
     def evol_color(self, pos: int) -> None:
         if 0 <= pos <= 4:
             self.al._evol_color(pos)
-        self.__evol_this()
+        else:
+            self.__evol_this()
 
     def __incrementcolor(self, color: Colors) -> None:
         if color.get_pos() == 4:
