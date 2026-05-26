@@ -121,6 +121,8 @@ def found_weight(enter: tuple[int, int], exits: tuple[int, int],
         order = operate2(num, dirs, order, (exix, exiy), (x, y))
         for te, xx, yy in order:
             yield from algoritm(text + te, x + xx, y + yy, visited)
+            if len(texts) != 0:
+                return
         visited.remove((x, y))
 
     def sorter() -> str:

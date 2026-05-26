@@ -27,13 +27,13 @@ class MazeGenerator():
         self.special_cells = []
         self._create_maze()
         MazeMiner(self)
-        #self.algoritm = self.data.ALGORITM(self.maze)
-        #deque(self.algoritm["algoritm"](), maxlen=0)
-        #if len(self.algoritm["list"]()) != 0:
-        #    self.solution = self.algoritm["sorter"]()
-        #else:
-        #    self.solution = None
-        self.solution = ""
+        self.algoritm = self.data.ALGORITM(self.maze)
+        deque(self.algoritm["algoritm"](), maxlen=0)
+        if len(self.algoritm["list"]()) != 0:
+           self.solution = self.algoritm["sorter"]()
+        else:
+           self.solution = None
+        # self.solution = ""
         self._generatedoc()
 
     def _generatedoc(self) -> None:
@@ -61,7 +61,7 @@ class MazeGenerator():
                 )
             if self.data.HEIGHT <= 5:
                 print(
-                    "height maze too small to draw '42' pattern.",
+                    "Height maze too small to draw '42' pattern.",
                     file=stderr
                 )
         else:
