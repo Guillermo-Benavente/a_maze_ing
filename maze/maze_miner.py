@@ -29,9 +29,11 @@ class MazeMiner():
         self.miner_map = [[None for _ in range(width)] for _ in range(height)]
         miners = int((width * height) * 0.04) or 1
         self.families: list[int] = list(range(miners))
-        self._inital_points(miners)
+        init_cells: list[Cell] = self._inital_points(miners)
         while self._has_cells_alive():
             self._maze_mining(miners)
+        if not self.maze_generator.data.PERFECT:
+            init_cells
         del self.families
         del self.mined_cells
         del self.miner_map
@@ -43,7 +45,7 @@ class MazeMiner():
                     return True
         return False
 
-    def _inital_points(self, miners: int) -> None:
+    def _inital_points(self, miners: int) -> list[Cell]:
         valid_cells: list[Cell] = [
             cell
             for row in self.maze_generator.maze
@@ -56,6 +58,7 @@ class MazeMiner():
             self.mined_cells.append([MinerCell(position_miner)])
             x, y = position_miner.position
             self.miner_map[y][x] = miner
+        return initial_cells
 
     def _maze_mining(self, miners: int) -> None:
         maze: list[list[Cell]] = self.maze_generator.maze
