@@ -1,3 +1,7 @@
+from maze_3d.player import Player
+from maze_3d.raycaster import Raycaster
+from functools import partial
+
 from sys import argv, maxsize as maxs
 from time import sleep
 from collections import deque
@@ -304,3 +308,34 @@ class Drawer():
         self.mlx.load_window(self.__key_how, self.__menu, self.MARGIN, self.MAINMENU_WIDTH)
 
         self.mlx.close_window()
+
+    def __maze3D(self, player: Player, mapa: Raycaster, param: Mlx):
+        teclas = self.mlx.key_pressed()
+        if but.BUTTON_SCAPE.value in teclas:
+            self.mlx.close_window()
+            param.mlx_loop_exit(param.mlx_ptr)
+            return
+        player.update(teclas, param)
+        self.mlx.flat_canvas.fill_all(
+            self.maze.data.WIDTH * 32,
+            self.maze.data.HEIGHT * 32,
+            (0, 0, 0, 0xFF)
+        )
+        mapa.castAllRays()
+        mapa.render(self.mlx)
+        self.mlx.mlx_put_image_to_window(self.MARGIN)
+        sleep(1/60)
+        return 0
+
+    def visualizer_3d(self, player: Player, mapa: Raycaster) -> None:
+        self.mlx = MlxPy()
+        self.mlx.new_window(
+            "3D",
+            mapa.mapa.setings.WINDOW_WIDTH,
+            mapa.mapa.setings.WINDOW_HEIGHT,
+            0,
+            0,
+            10
+        )
+        log = partial(self.__maze3D, player, mapa)
+        self.mlx.load_window_3d(log)

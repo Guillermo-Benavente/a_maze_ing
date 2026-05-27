@@ -6,6 +6,11 @@ from maze.maze_generator import MazeGenerator
 from pydantic import ValidationError
 from printer_thing import Drawer
 from sys import argv
+from maze_3d.player import Player
+from maze_3d.mapa import Mapa
+from maze_3d.datas import Datas
+from maze_3d.raycaster import Raycaster
+from colors import ColorCell, AllColors
 
 
 """if __name__ == "__main__":
@@ -37,9 +42,8 @@ from sys import argv
             print(e)"""
 
 
-def __printmaze() -> None:
+def __printmaze(data: Data) -> None:
     start_time: float = perf_counter()
-    data = Data.model_validate(lector(argv[1]))
     mlx = None
     while data is not None:
         maze: MazeGenerator = MazeGenerator(data)
@@ -57,13 +61,22 @@ if __name__ == "__main__":
     if len(argv[1:]) != 1:
         print("There aren't configuration")
         exit()
-    try:
-        __printmaze()
-    except (ValidationError, ValueError, AssertionError, PermissionError) as e:
-        if isinstance(e, ValidationError):
-            for error in e.errors():
-                print(error["msg"])
-        else:
-            print(e)
-    except Exception as e:
-        print(e)
+    # try:
+    data = Data.model_validate(lector(argv[1]))
+    maze: MazeGenerator = MazeGenerator(data)
+    # __printmaze(data)
+    setings = Datas(data)
+    play = Player(setings)
+    mapa = Mapa(maze.maze, setings)
+    colors = AllColors().get_color(ColorCell.WALL.value)
+    ray = Raycaster(play, mapa, colors)
+    draw = Drawer(maze)
+    draw.visualizer_3d(play, ray)
+    # except (ValidationError, ValueError, AssertionError, PermissionError) as e:
+    #     if isinstance(e, ValidationError):
+    #         for error in e.errors():
+    #             print(error["msg"])
+    #     else:
+    #         print(e)
+    # except Exception as e:
+    #     print(e)
