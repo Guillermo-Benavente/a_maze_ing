@@ -68,8 +68,11 @@ if __name__ == "__main__":
     setings = Datas(data)
     play = Player(setings)
     mapa = Mapa(maze.maze, setings)
-    colors = AllColors().get_color(ColorCell.WALL.value)
-    ray = Raycaster(play, mapa, colors)
+    colors1 = AllColors()
+    colors = colors1.get_color(ColorCell.WALL.value)
+    colors1.all_colors()
+    colors2 = colors1.get_color(ColorCell.WALL.value)
+    ray = Raycaster(play, mapa, colors, colors2)
     draw = Drawer(maze)
     draw.visualizer_3d(play, ray)
     # except (ValidationError, ValueError, AssertionError, PermissionError) as e:

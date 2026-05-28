@@ -40,4 +40,7 @@ class Player:
         self.y += sin(self.rotationAngle) * moveStep
         print(self.x)
         print(self.y)
-        print(self.rotationAngle, end="\n\n")
+        i = (self.rotationAngle * (180 / pi)) % 360
+        if i < 0:
+            i += 360
+        print(i, end="\n\n")

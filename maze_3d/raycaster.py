@@ -2,18 +2,21 @@ from maze_3d.ray import Ray, Player, Mapa
 from mlx_py import MlxPy
 
 class Raycaster:
-    def __init__(self, player: Player, mapa: Mapa, color: tuple[int, int, int, int]):
+    def __init__(self, player: Player, mapa: Mapa,
+                 color: tuple[int, int, int, int],
+                 color1: tuple[int, int, int, int]):
         self.rays = []
         self.player = player
         self.mapa = mapa
         self.color = color
+        self.color1 = color1
     
     def castAllRays(self) -> None:
         self.rays = []
 
         rayAngle = (self.player.rotationAngle - self.mapa.setings.VISION / 2)
         for _ in range(self.mapa.setings.NUM_RAYS):
-            ray = Ray(rayAngle, self.player, self.mapa, self.color)
+            ray = Ray(rayAngle, self.player, self.mapa, self.color, self.color1)
             ray.cast()
             self.rays.append(ray)
             rayAngle += self.mapa.setings.VISION / self.mapa.setings.NUM_RAYS
@@ -28,6 +31,8 @@ class Raycaster:
             if draw_begin < 0:
                 draw_end += draw_begin
                 draw_begin = 0
+            if draw_end > self.mapa.setings.WINDOW_HEIGHT:
+                draw_end = self.mapa.setings.WINDOW_HEIGHT
             mlx.flat_canvas.draw_rectangle(
                 int(i * resolution),
                 int(draw_begin),

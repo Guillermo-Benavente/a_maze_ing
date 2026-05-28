@@ -9,5 +9,5 @@ class Datas:
         self.WINDOW_WIDTH = data.WIDTH * self.CELS_SIZE
         self.WINDOW_HEIGHT = data.HEIGHT * self.CELS_SIZE 
         self.VISION = 60 * (pi / 180)
-        self.RESOLUTION = 8
+        self.RESOLUTION = 4
         self.NUM_RAYS = self.WINDOW_WIDTH // self.RESOLUTION
