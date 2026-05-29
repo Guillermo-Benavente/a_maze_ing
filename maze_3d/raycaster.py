@@ -4,12 +4,14 @@ from mlx_py import MlxPy
 class Raycaster:
     def __init__(self, player: Player, mapa: Mapa,
                  color: tuple[int, int, int, int],
-                 color1: tuple[int, int, int, int]):
+                 color1: tuple[int, int, int, int],
+                 floor: tuple[int, int, int, int]):
         self.rays = []
         self.player = player
         self.mapa = mapa
         self.color = color
         self.color1 = color1
+        self.floor = floor
     
     def castAllRays(self) -> None:
         self.rays = []
@@ -23,6 +25,8 @@ class Raycaster:
 
     def render(self, mlx: MlxPy) -> None:
         i = 0
+        mlx.flat_canvas.draw_rectangle(0, 0, self.mapa.setings.WINDOW_WIDTH, self.mapa.setings.WINDOW_HEIGHT //2 , (0, 0, 0, 0xFF))
+        mlx.flat_canvas.draw_rectangle(0, self.mapa.setings.WINDOW_HEIGHT //2, self.mapa.setings.WINDOW_WIDTH, self.mapa.setings.WINDOW_HEIGHT, self.floor)
         for ray in self.rays:
             line_height = (self.mapa.setings.CELS_SIZE / ray.distance) * 415
             draw_begin = (self.mapa.setings.WINDOW_HEIGHT / 2) - (line_height / 2)

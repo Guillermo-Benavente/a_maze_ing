@@ -42,16 +42,29 @@ from colors import ColorCell, AllColors
             print(e)"""
 
 
-def __printmaze(data: Data) -> None:
+def __cube3D(data: Data, maze: MazeGenerator) -> None:
+    setings = Datas(data)
+    play = Player(setings)
+    mapa = Mapa(maze.maze, setings)
+    colors1 = AllColors()
+    colors = colors1.get_color(ColorCell.WALL.value)
+    colors3 = colors1.get_color(ColorCell.FLOOR.value)
+    colors1.all_colors()
+    colors2 = colors1.get_color(ColorCell.WALL.value)
+    ray = Raycaster(play, mapa, colors, colors2, colors3)
+    maze.view_maze_ascii()
+    draw = Drawer(maze)
+    draw.visualizer_3d(play, ray)
+
+def __printmaze(data: Data, maze: MazeGenerator) -> None:
     start_time: float = perf_counter()
     mlx = None
     while data is not None:
-        maze: MazeGenerator = MazeGenerator(data)
         draw = Drawer(maze)
         draw.visualizer(mlx)
-        sleep(1)
         data = draw.new_data
         mlx =  draw.mlx
+        maze = MazeGenerator(data)
     end_time: float = perf_counter()
     total_time: float = end_time - start_time
     print("\n¡Proceso completado!")
@@ -61,25 +74,19 @@ if __name__ == "__main__":
     if len(argv[1:]) != 1:
         print("There aren't configuration")
         exit()
-    # try:
-    data = Data.model_validate(lector(argv[1]))
-    maze: MazeGenerator = MazeGenerator(data)
-    # __printmaze(data)
-    setings = Datas(data)
-    play = Player(setings)
-    mapa = Mapa(maze.maze, setings)
-    colors1 = AllColors()
-    colors = colors1.get_color(ColorCell.WALL.value)
-    colors1.all_colors()
-    colors2 = colors1.get_color(ColorCell.WALL.value)
-    ray = Raycaster(play, mapa, colors, colors2)
-    draw = Drawer(maze)
-    draw.visualizer_3d(play, ray)
-    # except (ValidationError, ValueError, AssertionError, PermissionError) as e:
-    #     if isinstance(e, ValidationError):
-    #         for error in e.errors():
-    #             print(error["msg"])
-    #     else:
-    #         print(e)
-    # except Exception as e:
-    #     print(e)
+    try:
+        data = Data.model_validate(lector(argv[1]))
+        maze: MazeGenerator = MazeGenerator(data)
+        if data.VISUAL3D:
+            __cube3D(data, maze)
+        else:
+            __printmaze(data, maze)
+    
+    except (ValidationError, ValueError, AssertionError, PermissionError) as e:
+        if isinstance(e, ValidationError):
+            for error in e.errors():
+                print(error["msg"])
+        else:
+            print(e)
+    except Exception as e:
+        print(e)

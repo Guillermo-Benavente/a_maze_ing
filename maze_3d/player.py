@@ -36,11 +36,17 @@ class Player:
 
         moveStep = self.walkDirection * self.moveSpeed
         self.rotationAngle += self.turnDirection * self.rotationSpeed
-        self.x += cos(self.rotationAngle) * moveStep
-        self.y += sin(self.rotationAngle) * moveStep
-        print(self.x)
-        print(self.y)
-        i = (self.rotationAngle * (180 / pi)) % 360
-        if i < 0:
-            i += 360
-        print(i, end="\n\n")
+        movex = cos(self.rotationAngle) * moveStep
+        movey = sin(self.rotationAngle) * moveStep
+        if not ((movex + self.x) >= self.setings.data.WIDTH * self.setings.CELS_SIZE
+                or (movex + self.x) <= 0):
+            self.x += movex
+        if not ((movey + self.y) >= self.setings.data.HEIGHT * self.setings.CELS_SIZE
+                or (movey + self.y) <= 0):
+            self.y += movey
+        # print(self.x)
+        # print(self.y)
+        # i = (self.rotationAngle * (180 / pi)) % 360
+        # if i < 0:
+        #     i += 360
+        # print(i, end="\n\n")

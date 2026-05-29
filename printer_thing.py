@@ -226,8 +226,14 @@ class Drawer():
                 self.content = self.maze.solution
             if key == but.BUTTON_0.value:
                 deque(self.maze.algoritm["algoritm"](), maxlen=0)
-                if len(self.maze.algoritm["list"]()) != 0:
-                    self.solution = self.maze.algoritm["sorter"]()
+                hola: set[tuple[int, int]] = set()
+                for i in self.maze.algoritm["list"]():
+                    hola.update(self.__get_path_coords(
+                            self.maze.data.ENTRY,
+                            self.maze.data.EXIT,
+                            i
+                    ))
+                self.__drawway(hola)
             self.__draw_maze()
             self.__drawway(self.__get_path_coords(
                 self.maze.data.ENTRY,

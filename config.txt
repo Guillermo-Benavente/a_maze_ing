@@ -6,4 +6,5 @@ OUTPUT_FILE=maze.txt
 PERFECT=False
 ALGORITM=1
 SEED=10
+VISUAL3D=False
 # hola

@@ -6,8 +6,8 @@ class Datas:
     def __init__(self, data: Data):
         self.data = data
         self.CELS_SIZE = 32
-        self.WINDOW_WIDTH = data.WIDTH * self.CELS_SIZE
-        self.WINDOW_HEIGHT = data.HEIGHT * self.CELS_SIZE 
+        self.WINDOW_WIDTH = 800
+        self.WINDOW_HEIGHT = 700
         self.VISION = 60 * (pi / 180)
         self.RESOLUTION = 4
         self.NUM_RAYS = self.WINDOW_WIDTH // self.RESOLUTION

@@ -9,7 +9,7 @@ from sys import argv
 
 
 LIST = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT", "SEED",
-        "ALGORITM"]
+        "ALGORITM", "VISUAL3D"]
 
 
 class Data(BaseModel):
@@ -20,6 +20,7 @@ class Data(BaseModel):
     EXIT: tuple[int, int]
     OUTPUT_FILE: str = Field(..., min_length=5)
     PERFECT: bool
+    VISUAL3D: bool
     SEED: int = Field(default_factory=lambda: randint(1, maxs))
     ALGORITM: Callable[..., Any] | None = None
 
@@ -58,6 +59,10 @@ class Data(BaseModel):
                 sol.update({"ALGORITM": partial(found_all, entry, exits)})
             else:
                 sol.update({"ALGORITM": partial(found_weight, entry, exits)})
+        if isinstance(datas.get("VISUAL3D"), str):
+            value = datas["VISUAL3D"].lower()
+            assert value == "true" or value == "false", "VISUAL3D is icorrect"
+            sol.update({"VISUAL3D": value == "true"})
         return sol
 
     @model_validator(mode="after")
