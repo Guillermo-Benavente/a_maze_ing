@@ -323,8 +323,8 @@ class Drawer():
             return
         player.update(teclas, param)
         self.mlx.flat_canvas.fill_all(
-            self.maze.data.WIDTH * 32,
-            self.maze.data.HEIGHT * 32,
+            mapa.mapa.setings.WINDOW_WIDTH,
+            mapa.mapa.setings.WINDOW_HEIGHT,
             (0, 0, 0, 0xFF)
         )
         mapa.castAllRays()
