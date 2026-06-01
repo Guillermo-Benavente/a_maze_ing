@@ -47,23 +47,35 @@ class MazeMiner():
         while self._has_cells_alive():
             self._maze_mining(miners)
         if not self.maze_generator.data.PERFECT:
-            opposite = {
-                LimitWallType.NORTH: LimitWallType.SOUTH,
-                LimitWallType.SOUTH: LimitWallType.NORTH,
-                LimitWallType.EAST: LimitWallType.WEST,
-                LimitWallType.WEST: LimitWallType.EAST
-            }
-            for cell in self._get_dead_ends():
-                open_wall = next(
+            all_dead_ends = self._get_dead_ends()
+            imperfection_rate = 0.4
+            num_to_break = int(len(all_dead_ends) * imperfection_rate)
+            chosen_dead_ends = sample(all_dead_ends, num_to_break)
+            for dead_end_cell in chosen_dead_ends:
+                current_open_wall = next(
                     wall_type for wall_type in LimitWallType 
-                    if not getattr(cell.walls, wall_type.name.lower())
+                    if not getattr(dead_end_cell.walls, wall_type.name.lower())
                 )
-                required_direction = opposite[open_wall]
-                self._mined_cell(
-                    self.maze_generator.maze, 
-                    MinerCell(cell), 
-                    imperfect_rule
+                [
+                    wall_to_break,
+                    y_offset,
+                    x_offset,
+                    opposite_adjacent_wall
+                ] = next(
+                    direction_data for direction_data in self.DIRECTIONS 
+                    if direction_data[3] == current_open_wall
                 )
+                if wall_to_break not in dead_end_cell.limit_wall_type:
+                    current_x, current_y = dead_end_cell.position
+                    target_y = current_y + y_offset
+                    target_x = current_x + x_offset
+                    if 0 <= target_y < height and 0 <= target_x < width:
+                        adjacent_cell = self.maze_generator.maze[target_y][target_x]
+                        if CellType.FORTY_TWO not in adjacent_cell.cell_type:
+                            setattr(dead_end_cell.walls, wall_to_break.name.lower(), False)
+                            setattr(adjacent_cell.walls, opposite_adjacent_wall.name.lower(), False)
+                            dead_end_cell.encode_walls()
+                            adjacent_cell.encode_walls()
         del self.families
         del self.mined_cells
         del self.miner_map
@@ -73,6 +85,8 @@ class MazeMiner():
         for row in self.maze_generator.maze:
             for cell in row:
                 if CellType.FORTY_TWO in cell.cell_type:
+                    continue
+                if CellType.LIMIT in cell.cell_type:
                     continue
                 walls_count: int = sum([
                     cell.walls.north,
