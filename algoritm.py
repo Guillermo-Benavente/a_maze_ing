@@ -140,7 +140,7 @@ def found_weight(enter: tuple[int, int], exits: tuple[int, int],
             nx, ny = x + xx, y + yy
             if (nx, ny) not in visited:
                 num_sig = maps[ny][nx]
-                vecinos_sig = operate2(num_sig, dirs, [], exits, (nx, ny))
+                vecinos_sig = operate2(num_sig, dirs, [], exits, (x, y))
                 stack.append((text + te, nx, ny, vecinos_sig, 0))
 
     def sorter() -> str:
