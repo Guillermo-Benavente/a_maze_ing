@@ -28,7 +28,7 @@ class RayOrientation:
         normalized = normalize_angle(angle)
         is_down = 0.0 < normalized < pi
         is_up = not is_down
-        is_left = not (0.5 * pi <= normalized <= 1.5 * pi)
+        is_left = 0.5 * pi <= normalized <= 1.5 * pi
         is_right = not is_left
         return cls(normalized, is_up, is_down, is_left, is_right)
 
@@ -191,5 +191,5 @@ class Ray:
             self.current_color = self.colors1
             self.hit.side = "E" if self.orientation.is_left else "W"
         self.hit.distance *= cos(
-            self.player.stats.rotation_speed - self.orientation.angle
+            self.player.transform.rotation_angle - self.orientation.angle
         )

@@ -322,7 +322,7 @@ class Drawer():
             param.mlx_loop_exit(param.mlx_ptr)
             return
         player.update(teclas, param)
-        map.castAllRays()
+        map.cast_all_rays()
         map.render(self.mlx)
         self.mlx.mlx_put_image_to_window(self.MARGIN)
         return 0
