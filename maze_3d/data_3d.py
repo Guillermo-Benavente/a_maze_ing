@@ -1,7 +1,16 @@
-from math import pi
 from parser_config import Data
+from math import pi
+
 
 class Data_3D:
+    data: Data
+    CELS_SIZE: int
+    WINDOW_WIDTH: int
+    WINDOW_HEIGHT: int
+    VISION: float
+    RESOLUTION: int
+    NUM_RAYS: int
+
     def __init__(self, data: Data):
         self.data = data
         self.CELS_SIZE = 32

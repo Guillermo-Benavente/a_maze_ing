@@ -1,152 +1,195 @@
-from maze_3d.mapa import Mapa
-from maze_3d.player import Player, pi
-from colors import AllColors
-from math import sqrt, tan, cos
+from .map import Map
+from .player import Player
+from dataclasses import dataclass
+from math import sqrt, tan, cos, pi
 
-def normalizeAngle(angle: float) -> float:
+
+def normalize_angle(angle: float) -> float:
     angle = angle % (2 * pi)
     if angle <= 0:
         angle = (2 * pi) + angle
     return angle
 
-def distance_between(x1, y1, x2, y2):
-    return sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
+
+def distance_between(x1: float, y1: float, x2: float, y2: float) -> float:
+    return sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+
+@dataclass
+class RayOrientation:
+    angle: float
+    is_up: bool
+    is_down: bool
+    is_left: bool
+    is_right: bool
+
+    @classmethod
+    def from_angle(cls, angle: float) -> 'RayOrientation':
+        normalized = normalize_angle(angle)
+        is_down = 0.0 < normalized < pi
+        is_up = not is_down
+        is_left = not (0.5 * pi <= normalized <= 1.5 * pi)
+        is_right = not is_left
+        return cls(normalized, is_up, is_down, is_left, is_right)
+
+
+@dataclass
+class RayHit:
+    x: float = 0.0
+    y: float = 0.0
+    distance: float = 0.0
+    side: str = ""
+
 
 class Ray:
-    def __init__(self, angle: float, player: Player, mapa: Mapa,
-                 colors: tuple[int, int, int, int],
-                 colors2: tuple[int, int, int, int]) -> None:
-        self.colors1 = colors
+    colors1: tuple[int, int, int, int]
+    colors2: tuple[int, int, int, int]
+    current_color: tuple[int, int, int, int]
+    orientation: RayOrientation
+    hit: RayHit
+    player: Player
+    map: Map
+
+    def __init__(
+        self,
+        angle: float,
+        player: Player,
+        map: Map,
+        colors1: tuple[int, int, int, int],
+        colors2: tuple[int, int, int, int]
+    ) -> None:
+        self.colors1 = colors1
         self.colors2 = colors2
-
-        self.rayAngle = normalizeAngle(angle)
+        self.current_color = colors1
         self.player = player
-        self.mapa = mapa
+        self.map = map
+        self.orientation = RayOrientation.from_angle(angle)
+        self.hit = RayHit()
 
-        self.is_facing_down = self.rayAngle > 0 and self.rayAngle < pi
-        self.is_facing_up = not self.is_facing_down
-        self.is_facing_right = self.rayAngle < 0.5 * pi or self.rayAngle > 1.5 * pi
-        self.is_facing_left = not self.is_facing_right
+    def _find_horizontal_intersection(
+        self,
+        cell_size: int,
+        map_width: int,
+        map_height: int
+    ) -> tuple[bool, float, float]:
+        player_x: float = self.player.transform.x
+        player_y: float = self.player.transform.y
+        first_intercept_y: float = player_y
+        first_intercept_x: float = player_x
+        ray_angle: float = self.orientation.angle
+        if self.orientation.is_up:
+            first_intercept_y = (player_y // cell_size) * cell_size - 0.0001
+        elif self.orientation.is_down:
+            first_intercept_y = (
+                ((player_y // cell_size) * cell_size) + cell_size
+            )
+        if tan(ray_angle) != 0:
+            first_intercept_x = (
+                player_x + (first_intercept_y - player_y) / tan(ray_angle)
+            )
+        step_y: float = -cell_size if self.orientation.is_up else cell_size
+        step_x: float = step_y / tan(ray_angle) if tan(ray_angle) != 0 else 0.0
+        wall_side: str = "S" if self.orientation.is_up else "N"
+        return self._ray_loop_scan(
+            first_intercept_x, first_intercept_y,
+            step_x, step_y,
+            map_width, map_height,
+            wall_side
+        )
 
-        self.wall_hit_x = 0
-        self.wall_hit_y = 0 
-        self.distance = 0
-        self.hit_side = ""
-    
+    def _find_vertical_intersection(
+        self,
+        cell_size: int,
+        map_width: int,
+        map_height: int
+    ) -> tuple[bool, float, float]:
+        player_x: float = self.player.transform.x
+        player_y: float = self.player.transform.y
+        first_intercept_x: float = player_x
+        ray_angle: float = self.orientation.angle
+        if self.orientation.is_left:
+            first_intercept_x = (player_x // cell_size) * cell_size - 0.0001
+        elif self.orientation.is_right:
+            first_intercept_x = (
+                ((player_x // cell_size) * cell_size) + cell_size
+            )
+        first_intercept_y: float = (
+            player_y + (first_intercept_x - player_x) * tan(ray_angle)
+        )
+        step_x: float = -cell_size if self.orientation.is_left else cell_size
+        step_y: float = step_x * tan(ray_angle)
+        wall_side: str = "E" if self.orientation.is_left else "W"
+        return self._ray_loop_scan(
+            first_intercept_x, first_intercept_y,
+            step_x, step_y,
+            map_width, map_height,
+            wall_side
+        )
+
+    def _ray_loop_scan(
+        self,
+        start_x: float,
+        start_y: float,
+        step_x: float,
+        step_y: float,
+        map_width: int,
+        map_height: int,
+        wall_direction: str
+    ) -> tuple[bool, float, float]:
+        cell_size: int = self.map.setings.CELS_SIZE
+        while (
+            (-cell_size <= start_x < map_width + cell_size)
+            and (-cell_size <= start_y < map_height + cell_size)
+        ):
+            if self.map.has_wall_at(start_x, start_y, wall_direction):
+                return True, start_x, start_y
+            start_x += step_x
+            start_y += step_y
+        return False, 0.0, 0.0
+
     def cast(self) -> None:
-        found_horizontal_wall = False
-        horizontal_hit_x = 0
-        horizontal_hit_y = 0
-
-        first_intersection_x = None
-        first_intersection_y = None
-
-        cel = self.mapa.setings.CELS_SIZE
-        if self.is_facing_up:
-            first_intersection_y = ((self.player.y) // cel) * cel - 0.0001
-        elif self.is_facing_down:
-            first_intersection_y = ((self.player.y // cel) * cel) + cel
+        MAX_DISTANCE: float = 999999.0
+        cell_size: int = self.map.setings.CELS_SIZE
+        map_width: int = self.map.setings.data.WIDTH * cell_size
+        map_height: int = self.map.setings.data.HEIGHT * cell_size
+        player_x: float = self.player.transform.x
+        player_y: float = self.player.transform.y
+        [
+            found_horizontal,
+            horiz_hit_x,
+            horiz_hit_y
+        ] = self._find_horizontal_intersection(
+            cell_size, map_width, map_height
+        )
+        [
+            found_vertical,
+            vert_hit_x,
+            vert_hit_y
+        ] = self._find_vertical_intersection(
+            cell_size, map_width, map_height
+        )
+        dist_horizontal: float = (
+            distance_between(player_x, player_y, horiz_hit_x, horiz_hit_y)
+            if found_horizontal
+            else MAX_DISTANCE
+        )
+        dist_vertical: float = (
+            distance_between(player_x, player_y, vert_hit_x, vert_hit_y)
+            if found_vertical
+            else MAX_DISTANCE
+        )
+        if dist_horizontal < dist_vertical:
+            self.hit.x = horiz_hit_x
+            self.hit.y = horiz_hit_y
+            self.hit.distance = dist_horizontal
+            self.current_color = self.colors2
+            self.hit.side = "S" if self.orientation.is_up else "N"
         else:
-            first_intersection_y = self.player.y
-
-        if tan(self.rayAngle) != 0:
-            first_intersection_x = self.player.x + (first_intersection_y - self.player.y) / tan(self.rayAngle)
-        else:
-            first_intersection_x = self.player.x
-
-        next_horizontal_x = first_intersection_x
-        next_horizontal_y = first_intersection_y
-
-        xa = 0
-        ya = 0
-
-        if self.is_facing_up:
-            ya = -cel
-        if self.is_facing_down:
-            ya = cel
-
-        if tan(self.rayAngle) != 0:
-            xa = ya / tan(self.rayAngle)
-        else:
-            xa = 0
-
-        width = self.mapa.setings.data.WIDTH * cel
-        height = self.mapa.setings.data.HEIGHT * cel
-        while (next_horizontal_x < width + cel and next_horizontal_x >= -cel and next_horizontal_y < height + cel
-               and next_horizontal_y >= -cel):
-            dir_vertical = "S" if self.is_facing_up else "N"
-            check_y = next_horizontal_y
-            check_x = next_horizontal_x
-            if (self.mapa.has_wall_at(check_x, check_y, dir_vertical)):
-                found_horizontal_wall = True
-                horizontal_hit_x = check_x
-                horizontal_hit_y = check_y
-                break
-            else:
-                next_horizontal_x += xa
-                next_horizontal_y += ya
-
-        found_vertical_wall = False
-        vertical_hit_x = 0
-        vertical_hit_y = 0
-
-        horizontal_distance = 0
-        vertical_distance = 0
-
-        if self.is_facing_left:
-            first_intersection_x = ((self.player.x) // cel) * cel - 0.0001
-        elif self.is_facing_right:
-            first_intersection_x = ((self.player.x // cel) * cel) + cel
-        else:
-            first_intersection_x = self.player.x
-
-        first_intersection_y = self.player.y + (first_intersection_x - self.player.x) * tan(self.rayAngle)
-
-        next_vertical_x = first_intersection_x
-        next_vertical_y = first_intersection_y
-
-        if self.is_facing_right:
-            xa = cel
-        if self.is_facing_left:
-            xa = -cel
-
-        ya = xa * tan(self.rayAngle)
-
-        while (next_vertical_x < width + cel and next_vertical_x >= -cel and next_vertical_y < height + cel
-               and next_vertical_y >= -cel):
-            dir_horicont = "E" if self.is_facing_left else "W"
-            check_y = next_vertical_y
-            check_x = next_vertical_x
-            if (self.mapa.has_wall_at(check_x, check_y, dir_horicont)):
-                found_vertical_wall = True
-                vertical_hit_x = check_x
-                vertical_hit_y = check_y
-                break
-            else:
-                next_vertical_x += xa
-                next_vertical_y += ya
-
-        if found_horizontal_wall:
-            horizontal_distance = distance_between(self.player.x, self.player.y, horizontal_hit_x, horizontal_hit_y)
-        else:
-            horizontal_distance = 999999
-        
-        if found_vertical_wall:
-            vertical_distance = distance_between(self.player.x, self.player.y, vertical_hit_x, vertical_hit_y)
-        else:
-            vertical_distance = 999999
-
-        if horizontal_distance < vertical_distance:
-            self.wall_hit_x = horizontal_hit_x
-            self.wall_hit_y = horizontal_hit_y
-            self.distance = horizontal_distance
-            self.colors = self.colors2
-            self.hit_side = "S" if self.is_facing_up else "N"
-        else:
-            self.wall_hit_x = vertical_hit_x
-            self.wall_hit_y = vertical_hit_y
-            self.distance = vertical_distance
-            self.colors = self.colors1
-            self.hit_side = "E" if self.is_facing_left else "W"
-
-        self.distance *= cos(self.player.rotationAngle - self.rayAngle)      
+            self.hit.x = vert_hit_x
+            self.hit.y = vert_hit_y
+            self.hit.distance = dist_vertical
+            self.current_color = self.colors1
+            self.hit.side = "E" if self.orientation.is_left else "W"
+        self.hit.distance *= cos(
+            self.player.stats.rotation_speed - self.orientation.angle
+        )
