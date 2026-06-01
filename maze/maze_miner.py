@@ -30,9 +30,12 @@ class MazeMiner():
         self._mined()
 
     def _mined(self) -> None:
+        required_direction: LimitWallType | None = None
         def imperfect_rule(new_cell: Cell, limit: LimitWallType, current_cell: Cell) -> bool:
             if CellType.FORTY_TWO in new_cell.cell_type:
                 return False
+            if required_direction is not None:
+                return limit == required_direction
             return getattr(current_cell.walls, limit.name.lower())
         self.mined_cells: list[list[MinerCell]] = []
         width: int = self.maze_generator.data.WIDTH
@@ -40,15 +43,46 @@ class MazeMiner():
         self.miner_map = [[None for _ in range(width)] for _ in range(height)]
         miners = int((width * height) * 0.04) or 1
         self.families: list[int] = list(range(miners))
-        init_cells: list[Cell] = self._inital_points(miners)
+        self._inital_points(miners)
         while self._has_cells_alive():
             self._maze_mining(miners)
         if not self.maze_generator.data.PERFECT:
-            for _, cell in enumerate(init_cells):
-                self._mined_cell(self.maze_generator.maze, MinerCell(cell), imperfect_rule)
+            opposite = {
+                LimitWallType.NORTH: LimitWallType.SOUTH,
+                LimitWallType.SOUTH: LimitWallType.NORTH,
+                LimitWallType.EAST: LimitWallType.WEST,
+                LimitWallType.WEST: LimitWallType.EAST
+            }
+            for cell in self._get_dead_ends():
+                open_wall = next(
+                    wall_type for wall_type in LimitWallType 
+                    if not getattr(cell.walls, wall_type.name.lower())
+                )
+                required_direction = opposite[open_wall]
+                self._mined_cell(
+                    self.maze_generator.maze, 
+                    MinerCell(cell), 
+                    imperfect_rule
+                )
         del self.families
         del self.mined_cells
         del self.miner_map
+
+    def _get_dead_ends(self) -> list[Cell]:
+        dead_ends: list[Cell] = []
+        for row in self.maze_generator.maze:
+            for cell in row:
+                if CellType.FORTY_TWO in cell.cell_type:
+                    continue
+                walls_count: int = sum([
+                    cell.walls.north,
+                    cell.walls.east,
+                    cell.walls.south,
+                    cell.walls.west
+                ])
+                if walls_count == 3:
+                    dead_ends.append(cell)
+        return dead_ends
 
     def _has_cells_alive(self) -> bool:
         for miner_list in self.mined_cells:
@@ -57,7 +91,7 @@ class MazeMiner():
                     return True
         return False
 
-    def _inital_points(self, miners: int) -> list[Cell]:
+    def _inital_points(self, miners: int) -> None:
         valid_cells: list[Cell] = [
             cell
             for row in self.maze_generator.maze
@@ -70,7 +104,6 @@ class MazeMiner():
             self.mined_cells.append([MinerCell(position_miner)])
             x, y = position_miner.position
             self.miner_map[y][x] = miner
-        return initial_cells
 
     def _maze_mining(self, miners: int) -> None:
         def perfect_rule(new_cell: Cell, *_) -> bool:
