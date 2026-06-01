@@ -64,7 +64,8 @@ def __printmaze(data: Data, maze: MazeGenerator) -> None:
         draw.visualizer(mlx)
         data = draw.new_data
         mlx =  draw.mlx
-        maze = MazeGenerator(data)
+        if data:
+            maze = MazeGenerator(data)
     end_time: float = perf_counter()
     total_time: float = end_time - start_time
     print("\n¡Proceso completado!")

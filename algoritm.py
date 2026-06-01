@@ -56,27 +56,37 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
     exix, exiy = exits
     dirs = [(('N', 0, -1)), (('E', 1, 0)), (('S', 0, 1)), (('W', -1, 0))]
 
-    def algoritm(text: str = "", x: int = enx, y: int = eny,
-                 visited: set[tuple[int, int]] = set()
-                 ) -> Generator[str, None, None]:
+    def algoritm() -> Generator[str, None, None]:
         nonlocal texts
-        if len(text) == 0:
-            texts = []
-            visited.clear()
-        order: list[tuple[str, int, int]] = []
-        if len(text) != 0:
-            yield text
-        if x == exix and y == exiy:
-            texts.append(text)
-            return
-        if (x, y) in visited:
-            return
-        visited.add((x, y))
-        num = maps[y][x]
-        order = operate(num, dirs, order)
-        for te, xx, yy in order:
-            yield from algoritm(text + te, x + xx, y + yy, visited)
-        visited.remove((x, y))
+        texts = []
+        visited: set[tuple[int, int]] = set()
+        num_inicial = maps[eny][enx]
+        vecinos_iniciales = operate(num_inicial, dirs, [])
+        stack = [("", enx, eny, vecinos_iniciales, 0)]
+        while stack:
+            text, x, y, order, index = stack[-1]
+            if index == 0:
+                if len(text) != 0:
+                    yield text
+                if x == exix and y == exiy:
+                    texts.append(text)
+                    stack.pop()
+                    continue
+                if (x, y) in visited:
+                    stack.pop()
+                    continue
+                visited.add((x, y))
+            if index >= len(order):
+                visited.remove((x, y))
+                stack.pop()
+                continue
+            stack[-1] = (text, x, y, order, index + 1)
+            te, xx, yy = order[index]
+            nx, ny = x + xx, y + yy
+            if (nx, ny) not in visited:
+                num_sig = maps[ny][nx]
+                vecinos_sig = operate(num_sig, dirs, [])
+                stack.append((text + te, nx, ny, vecinos_sig, 0))
 
     def sorter() -> str:
         sol = sorted(texts, key=lambda x: len(x))
@@ -101,29 +111,37 @@ def found_weight(enter: tuple[int, int], exits: tuple[int, int],
     exix, exiy = exits
     dirs = [('N', 0, -1), ('E', 1, 0), ('S', 0, 1), ('W', -1, 0)]
 
-    def algoritm(text: str = "", x: int = enx, y: int = eny,
-                 visited: set[tuple[int, int]] = set()
-                 ) -> Generator[str, None, None]:
+    def algoritm() -> Generator[str, None, None]:
         nonlocal texts
-        if len(text) == 0:
-            texts = []
-            visited.clear()
-        order: list[tuple[str, int, int]] = []
-        if len(text) != 0:
-            yield text
-        if x == exix and y == exiy:
-            texts.append(text)
-            return
-        if (x, y) in visited:
-            return
-        visited.add((x, y))
-        num = maps[y][x]
-        order = operate2(num, dirs, order, (exix, exiy), (x, y))
-        for te, xx, yy in order:
-            yield from algoritm(text + te, x + xx, y + yy, visited)
-            if len(texts) != 0:
-                return
-        visited.remove((x, y))
+        texts = []
+        visited: set[tuple[int, int]] = set()
+        num_inicial = maps[eny][enx]
+        vecinos_iniciales = operate2(num_inicial, dirs, [], exits, enter)
+        stack = [("", enx, eny, vecinos_iniciales, 0)]
+        while stack:
+            text, x, y, order, index = stack[-1]
+            if index == 0:
+                if len(text) != 0:
+                    yield text
+                if x == exix and y == exiy:
+                    texts.append(text)
+                    stack.pop()
+                    continue
+                if (x, y) in visited:
+                    stack.pop()
+                    continue
+                visited.add((x, y))
+            if index >= len(order):
+                visited.remove((x, y))
+                stack.pop()
+                continue
+            stack[-1] = (text, x, y, order, index + 1)
+            te, xx, yy = order[index]
+            nx, ny = x + xx, y + yy
+            if (nx, ny) not in visited:
+                num_sig = maps[ny][nx]
+                vecinos_sig = operate2(num_sig, dirs, [], exits, (nx, ny))
+                stack.append((text + te, nx, ny, vecinos_sig, 0))
 
     def sorter() -> str:
         return lista()[0]

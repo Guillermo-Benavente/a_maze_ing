@@ -73,11 +73,13 @@ class Ray:
         height = self.mapa.setings.WINDOW_HEIGHT * cel
         while (next_horizontal_x < width and next_horizontal_x >= 0 and next_horizontal_y < height
                and next_horizontal_y >= 0):
-            if (self.mapa.has_wall_at(next_horizontal_x, next_horizontal_y, "S")
-                or self.mapa.has_wall_at(next_horizontal_x, next_horizontal_y, "N")):
+            dir_vertical = "N" if self.is_facing_up else "S"
+            check_y = next_horizontal_y - 1 if self.is_facing_up else next_horizontal_y
+            check_x = next_horizontal_x
+            if (self.mapa.has_wall_at(check_x, check_y, dir_vertical)):
                 found_horizontal_wall = True
-                horizontal_hit_x = next_horizontal_x
-                horizontal_hit_y = next_horizontal_y
+                horizontal_hit_x = check_x
+                horizontal_hit_y = check_y
                 break
             else:
                 next_horizontal_x += xa
@@ -111,11 +113,13 @@ class Ray:
 
         while (next_vertical_x < width and next_vertical_x >= 0 and next_vertical_y < height
                and next_vertical_y >= 0):
-            if (self.mapa.has_wall_at(next_vertical_x, next_vertical_y, "E")
-                or self.mapa.has_wall_at(next_vertical_x, next_vertical_y, "W")):
+            dir_horicont = "W" if self.is_facing_left else "E"
+            check_y = next_vertical_y
+            check_x = next_vertical_x - 1 if self.is_facing_left else next_vertical_x
+            if (self.mapa.has_wall_at(check_x, check_y, dir_horicont)):
                 found_vertical_wall = True
-                vertical_hit_x = next_vertical_x
-                vertical_hit_y = next_vertical_y
+                vertical_hit_x = check_x
+                vertical_hit_y = check_y
                 break
             else:
                 next_vertical_x += xa
