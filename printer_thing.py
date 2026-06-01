@@ -322,15 +322,9 @@ class Drawer():
             param.mlx_loop_exit(param.mlx_ptr)
             return
         player.update(teclas, param)
-        self.mlx.flat_canvas.fill_all(
-            mapa.mapa.setings.WINDOW_WIDTH,
-            mapa.mapa.setings.WINDOW_HEIGHT,
-            (0, 0, 0, 0xFF)
-        )
         mapa.castAllRays()
         mapa.render(self.mlx)
         self.mlx.mlx_put_image_to_window(self.MARGIN)
-        sleep(1/60)
         return 0
 
     def visualizer_3d(self, player: Player, mapa: Raycaster) -> None:

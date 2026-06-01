@@ -1,8 +1,7 @@
 from math import pi
 from parser_config import Data
 
-class Datas:
-
+class Data_3D:
     def __init__(self, data: Data):
         self.data = data
         self.CELS_SIZE = 32

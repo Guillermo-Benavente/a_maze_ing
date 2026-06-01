@@ -31,6 +31,7 @@ class Ray:
         self.wall_hit_x = 0
         self.wall_hit_y = 0 
         self.distance = 0
+        self.hit_side = ""
     
     def cast(self) -> None:
         found_horizontal_wall = False
@@ -69,12 +70,12 @@ class Ray:
         else:
             xa = 0
 
-        width = self.mapa.setings.WINDOW_WIDTH * cel
-        height = self.mapa.setings.WINDOW_HEIGHT * cel
-        while (next_horizontal_x < width and next_horizontal_x >= 0 and next_horizontal_y < height
-               and next_horizontal_y >= 0):
-            dir_vertical = "N" if self.is_facing_up else "S"
-            check_y = next_horizontal_y - 1 if self.is_facing_up else next_horizontal_y
+        width = self.mapa.setings.data.WIDTH * cel
+        height = self.mapa.setings.data.HEIGHT * cel
+        while (next_horizontal_x < width + cel and next_horizontal_x >= -cel and next_horizontal_y < height + cel
+               and next_horizontal_y >= -cel):
+            dir_vertical = "S" if self.is_facing_up else "N"
+            check_y = next_horizontal_y
             check_x = next_horizontal_x
             if (self.mapa.has_wall_at(check_x, check_y, dir_vertical)):
                 found_horizontal_wall = True
@@ -111,11 +112,11 @@ class Ray:
 
         ya = xa * tan(self.rayAngle)
 
-        while (next_vertical_x < width and next_vertical_x >= 0 and next_vertical_y < height
-               and next_vertical_y >= 0):
-            dir_horicont = "W" if self.is_facing_left else "E"
+        while (next_vertical_x < width + cel and next_vertical_x >= -cel and next_vertical_y < height + cel
+               and next_vertical_y >= -cel):
+            dir_horicont = "E" if self.is_facing_left else "W"
             check_y = next_vertical_y
-            check_x = next_vertical_x - 1 if self.is_facing_left else next_vertical_x
+            check_x = next_vertical_x
             if (self.mapa.has_wall_at(check_x, check_y, dir_horicont)):
                 found_vertical_wall = True
                 vertical_hit_x = check_x
@@ -140,10 +141,12 @@ class Ray:
             self.wall_hit_y = horizontal_hit_y
             self.distance = horizontal_distance
             self.colors = self.colors2
+            self.hit_side = "S" if self.is_facing_up else "N"
         else:
             self.wall_hit_x = vertical_hit_x
             self.wall_hit_y = vertical_hit_y
             self.distance = vertical_distance
             self.colors = self.colors1
+            self.hit_side = "E" if self.is_facing_left else "W"
 
         self.distance *= cos(self.player.rotationAngle - self.rayAngle)      
