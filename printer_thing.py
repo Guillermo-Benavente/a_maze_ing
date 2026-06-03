@@ -226,14 +226,14 @@ class Drawer():
                 self.content = self.maze.solution
             if key == but.BUTTON_0.value:
                 deque(self.maze.algoritm["algoritm"](), maxlen=0)
-                hola: set[tuple[int, int]] = set()
+                all_ways: set[tuple[int, int]] = set()
                 for i in self.maze.algoritm["list"]():
-                    hola.update(self.__get_path_coords(
+                    all_ways.update(self.__get_path_coords(
                             self.maze.data.ENTRY,
                             self.maze.data.EXIT,
                             i
                     ))
-                self.__drawway(hola)
+                self.content = self.maze.algoritm["list"]()
             self.__draw_maze()
             self.__drawway(self.__get_path_coords(
                 self.maze.data.ENTRY,
@@ -241,6 +241,7 @@ class Drawer():
                 self.content
             ))
             self.mlx.mlx_put_image_to_window(self.MARGIN)
+            self.mlx.mlx_do_sync()
         if key == but.BUTTON_SCAPE.value:
             self.mlx.close_window()
             mlx_param.mlx_loop_exit(mlx_param.mlx_ptr)
