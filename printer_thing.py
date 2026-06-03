@@ -1,3 +1,7 @@
+from maze_3d.player import Player
+from maze_3d.raycaster import Raycaster
+from functools import partial
+
 from sys import argv, maxsize as maxs
 from time import sleep
 from collections import deque
@@ -10,7 +14,7 @@ from parser_config import lector, Data
 from maze.maze_generator import MazeGenerator
 import os
 from pydantic import ValidationError
-from  butons import Buttons as but
+from  buttons import Buttons as but
 
 class Drawer():
     WIDTH: int
@@ -222,8 +226,14 @@ class Drawer():
                 self.content = self.maze.solution
             if key == but.BUTTON_0.value:
                 deque(self.maze.algoritm["algoritm"](), maxlen=0)
-                if len(self.maze.algoritm["list"]()) != 0:
-                    self.solution = self.maze.algoritm["sorter"]()
+                hola: set[tuple[int, int]] = set()
+                for i in self.maze.algoritm["list"]():
+                    hola.update(self.__get_path_coords(
+                            self.maze.data.ENTRY,
+                            self.maze.data.EXIT,
+                            i
+                    ))
+                self.__drawway(hola)
             self.__draw_maze()
             self.__drawway(self.__get_path_coords(
                 self.maze.data.ENTRY,
@@ -304,3 +314,28 @@ class Drawer():
         self.mlx.load_window(self.__key_how, self.__menu, self.MARGIN, self.MAINMENU_WIDTH)
 
         self.mlx.close_window()
+
+    def __maze3D(self, player: Player, map: Raycaster, param: Mlx):
+        teclas = self.mlx.key_pressed()
+        if but.BUTTON_SCAPE.value in teclas:
+            self.mlx.close_window()
+            param.mlx_loop_exit(param.mlx_ptr)
+            return
+        player.update(teclas, param)
+        map.cast_all_rays()
+        map.render(self.mlx)
+        self.mlx.mlx_put_image_to_window(self.MARGIN)
+        return 0
+
+    def visualizer_3d(self, player: Player, map: Raycaster) -> None:
+        self.mlx = MlxPy()
+        self.mlx.new_window(
+            "3D",
+            map.map.setings.WINDOW_WIDTH,
+            map.map.setings.WINDOW_HEIGHT,
+            0,
+            0,
+            10
+        )
+        log = partial(self.__maze3D, player, map)
+        self.mlx.load_window_3d(log)
