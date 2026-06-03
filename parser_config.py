@@ -9,7 +9,7 @@ from sys import argv
 
 
 LIST = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT", "SEED",
-        "ALGORITM"]
+        "ALGORITM", "VISUAL3D"]
 
 
 class Data(BaseModel):
@@ -20,44 +20,49 @@ class Data(BaseModel):
     EXIT: tuple[int, int]
     OUTPUT_FILE: str = Field(..., min_length=5)
     PERFECT: bool
+    VISUAL3D: bool
     SEED: int = Field(default_factory=lambda: randint(1, maxs))
     ALGORITM: Callable[..., Any] | None = None
 
     @model_validator(mode="before")
     @classmethod
-    def parser(cls, datas: dict[str, str]) -> dict[str, Any]:
+    def parser(cls, data_3d: dict[str, str]) -> dict[str, Any]:
         entry = (0, 0)
         exits = (0, 0)
         sol: dict[str, Any] = {}
-        if isinstance(datas.get("WIDTH"), str):
-            sol.update({"WIDTH": int(datas["WIDTH"])})
-        if isinstance(datas.get("HEIGHT"), str):
-            sol.update({"HEIGHT": int(datas["HEIGHT"])})
-        if isinstance(datas.get("SEED"), str):
-            sol.update({"SEED": int(datas["SEED"])})
-        if isinstance(datas.get("ENTRY"), str):
-            x, y = datas["ENTRY"].strip("()").split(",")
+        if isinstance(data_3d.get("WIDTH"), str):
+            sol.update({"WIDTH": int(data_3d["WIDTH"])})
+        if isinstance(data_3d.get("HEIGHT"), str):
+            sol.update({"HEIGHT": int(data_3d["HEIGHT"])})
+        if isinstance(data_3d.get("SEED"), str):
+            sol.update({"SEED": int(data_3d["SEED"])})
+        if isinstance(data_3d.get("ENTRY"), str):
+            x, y = data_3d["ENTRY"].strip("()").split(",")
             entry = (int(x), int(y))
             sol.update({"ENTRY": entry})
-        if isinstance(datas.get("EXIT"), str):
-            x, y = datas["EXIT"].strip("()").split(",")
+        if isinstance(data_3d.get("EXIT"), str):
+            x, y = data_3d["EXIT"].strip("()").split(",")
             exits = (int(x), int(y))
             sol.update({"EXIT": exits})
-        if isinstance(datas.get("OUTPUT_FILE"), str):
-            assert argv[1] != datas["OUTPUT_FILE"], ("the output and input"
+        if isinstance(data_3d.get("OUTPUT_FILE"), str):
+            assert argv[1] != data_3d["OUTPUT_FILE"], ("the output and input"
                                                      " is the same")
-            sol.update({"OUTPUT_FILE": datas["OUTPUT_FILE"]})
-        if isinstance(datas.get("PERFECT"), str):
-            value = datas["PERFECT"].lower()
+            sol.update({"OUTPUT_FILE": data_3d["OUTPUT_FILE"]})
+        if isinstance(data_3d.get("PERFECT"), str):
+            value = data_3d["PERFECT"].lower()
             assert value == "true" or value == "false", "PERFECT is icorrect"
             sol.update({"PERFECT": value == "true"})
-        if isinstance(datas.get("ALGORITM"), str):
-            algoritm = int(datas["ALGORITM"])
+        if isinstance(data_3d.get("ALGORITM"), str):
+            algoritm = int(data_3d["ALGORITM"])
             assert algoritm == 1 or algoritm == 2, "ALGORITM not found"
             if algoritm == 1:
                 sol.update({"ALGORITM": partial(found_all, entry, exits)})
             else:
                 sol.update({"ALGORITM": partial(found_weight, entry, exits)})
+        if isinstance(data_3d.get("VISUAL3D"), str):
+            value = data_3d["VISUAL3D"].lower()
+            assert value == "true" or value == "false", "VISUAL3D is icorrect"
+            sol.update({"VISUAL3D": value == "true"})
         return sol
 
     @model_validator(mode="after")

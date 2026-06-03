@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Set
 from mlx import Mlx
 
 
@@ -37,7 +37,8 @@ class FlatCanvas:
                 (origin_y + current_row) * self.line_size
                 + origin_x * self.BYTES_PER_PIXEL
             )
-            self.bytes[start_byte_address : start_byte_address + row_bytes_len] = color_row
+            if start_byte_address >= 0 and start_byte_address + row_bytes_len <= len(self.bytes):
+                self.bytes[start_byte_address : start_byte_address + row_bytes_len] = color_row
 
     def draw_horizontal_line(
         self, 
@@ -74,6 +75,7 @@ class MlxPy:
 
     def __init__(self) -> None:
         self.mlx = Mlx()
+        self.pressed_keys: Set[int] = set()
         self.__create_display()
 
     def __create_display(self) -> None:
@@ -109,8 +111,9 @@ class MlxPy:
         initial_point: int = 0,
         menu_w: int = 0
     ):
-        self.mlx_expose_hook(menu)
         self.mlx_put_image_to_window(initial_point, menu_w)
+        self.mlx_expose_hook(menu)
+        self.mlx_do_sync()
         self.mlx_key_hook(callback)
         self.mlx_loop()
 
@@ -173,3 +176,31 @@ class MlxPy:
 
     def mlx_loop_exit(self) -> None:
         self.mlx.mlx_loop_exit(self.mlx_ptr)
+
+
+    def load_window_3d(
+        self,
+        callback: Any,
+        initial_point: int = 0
+    ):
+        self.mlx_put_image_to_window(initial_point)
+        self.mlx_do_sync()
+        self.setup_input_hooks(callback)
+        self.mlx_loop()
+
+
+    def setup_input_hooks(self, loop_callback: Any) -> None:
+        self.mlx.mlx_hook(self.window, 2, 1, self.__key_press, None)
+        
+        self.mlx.mlx_hook(self.window, 3, 2, self.__key_release, None)
+        
+        self.mlx.mlx_loop_hook(self.mlx_ptr, loop_callback, self.mlx)
+
+    def __key_press(self, keycode: int, param: Any) -> None:
+        self.pressed_keys.add(keycode)
+
+    def __key_release(self, keycode: int, param: Any) -> None:
+        self.pressed_keys.discard(keycode)
+
+    def key_pressed(self) -> list[int]:
+        return list(self.pressed_keys)
