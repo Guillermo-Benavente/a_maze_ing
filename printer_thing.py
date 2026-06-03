@@ -14,7 +14,7 @@ from parser_config import lector, Data
 from maze.maze_generator import MazeGenerator
 import os
 from pydantic import ValidationError
-from  butons import Buttons as but
+from  buttons import Buttons as but
 
 class Drawer():
     WIDTH: int
@@ -315,33 +315,27 @@ class Drawer():
 
         self.mlx.close_window()
 
-    def __maze3D(self, player: Player, mapa: Raycaster, param: Mlx):
+    def __maze3D(self, player: Player, map: Raycaster, param: Mlx):
         teclas = self.mlx.key_pressed()
         if but.BUTTON_SCAPE.value in teclas:
             self.mlx.close_window()
             param.mlx_loop_exit(param.mlx_ptr)
             return
         player.update(teclas, param)
-        self.mlx.flat_canvas.fill_all(
-            mapa.mapa.setings.WINDOW_WIDTH,
-            mapa.mapa.setings.WINDOW_HEIGHT,
-            (0, 0, 0, 0xFF)
-        )
-        mapa.castAllRays()
-        mapa.render(self.mlx)
+        map.cast_all_rays()
+        map.render(self.mlx)
         self.mlx.mlx_put_image_to_window(self.MARGIN)
-        sleep(1/60)
         return 0
 
-    def visualizer_3d(self, player: Player, mapa: Raycaster) -> None:
+    def visualizer_3d(self, player: Player, map: Raycaster) -> None:
         self.mlx = MlxPy()
         self.mlx.new_window(
             "3D",
-            mapa.mapa.setings.WINDOW_WIDTH,
-            mapa.mapa.setings.WINDOW_HEIGHT,
+            map.map.setings.WINDOW_WIDTH,
+            map.map.setings.WINDOW_HEIGHT,
             0,
             0,
             10
         )
-        log = partial(self.__maze3D, player, mapa)
+        log = partial(self.__maze3D, player, map)
         self.mlx.load_window_3d(log)
