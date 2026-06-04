@@ -1,11 +1,10 @@
 from maze_3d.player import Player
+from sys import argv
 from maze_3d.raycaster import Raycaster
 from functools import partial
-
-from sys import argv, maxsize as maxs
 from time import sleep
 from collections import deque
-from mlx import Mlx
+from mlx import Mlx  # type: ignore
 from mlx_py import MlxPy, FlatCanvas
 from maze.cell import Cell
 from maze.enums import CellType
@@ -14,7 +13,8 @@ from parser_config import lector, Data
 from maze.maze_generator import MazeGenerator
 import os
 from pydantic import ValidationError
-from  buttons import Buttons as but
+from buttons import Buttons as but
+
 
 class Drawer():
     WIDTH: int
@@ -61,7 +61,13 @@ class Drawer():
             if num > (self.WIDTH + self.MAINMENU_WIDTH):
                 self.MAINMENU_WIDTH = num - self.WIDTH
 
-    def __optimize_size(self, maze: MazeGenerator, tkwidth: int, tkheight: int,  size: int = 3) -> None:
+    def __optimize_size(
+            self,
+            maze: MazeGenerator,
+            tkwidth: int,
+            tkheight: int,
+            size: int = 3
+    ) -> None:
         width = maze.data.WIDTH * size
         height = maze.data.HEIGHT * size
         if tkheight > height and tkwidth > width:
@@ -75,9 +81,17 @@ class Drawer():
             x = round(self.CELL_SIZE * 0.04) or 1
             self.WALL_THICKNESS = x
 
-    def __get_cell_color(self, cell: Cell, is_wall: bool = False) -> tuple[int, int, int, int]:
+    def __get_cell_color(
+            self,
+            cell: Cell,
+            is_wall: bool = False
+    ) -> tuple[int, int, int, int]:
         if CellType.FORTY_TWO in cell.cell_type:
-            return self.ALL_COLORS.get_color(ColorCell.WALL_42.value if is_wall else ColorCell.FLOOR_42.value)
+            return self.ALL_COLORS.get_color(
+                ColorCell.WALL_42.value
+                if is_wall
+                else ColorCell.FLOOR_42.value
+            )
         if is_wall:
             return self.ALL_COLORS.get_color(ColorCell.WALL.value)
         if CellType.ENTRY in cell.cell_type:
@@ -92,8 +106,8 @@ class Drawer():
             origin_y = y * self.CELL_SIZE
             floor_color = self.__get_cell_color(cell, False)
             self.mlx.flat_canvas.draw_rectangle(
-                origin_x, origin_y, 
-                self.CELL_SIZE, self.CELL_SIZE, 
+                origin_x, origin_y,
+                self.CELL_SIZE, self.CELL_SIZE,
                 floor_color
             )
 
@@ -101,8 +115,8 @@ class Drawer():
         canvas: FlatCanvas = self.mlx.flat_canvas
         default_floor = self.ALL_COLORS.get_color(ColorCell.FLOOR.value)
         canvas.fill_all(
-            self.maze.data.WIDTH * self.CELL_SIZE, 
-            self.maze.data.HEIGHT * self.CELL_SIZE, 
+            self.maze.data.WIDTH * self.CELL_SIZE,
+            self.maze.data.HEIGHT * self.CELL_SIZE,
             default_floor
         )
         self.__draw_special_tiles()
@@ -150,10 +164,15 @@ class Drawer():
         self.mlx.mlx_put_image_to_window(self.MARGIN, self.MAINMENU_WIDTH)
         self.mlx.mlx_do_sync()
         for i in range(0, len(self.MENU), 2):
-            y_pos = self.HEIGHT + 30 + (i //2) * 20
+            y_pos = self.HEIGHT + 30 + (i // 2) * 20
             self.mlx.mlx_string_put(30, y_pos, 0xFFFFFF, self.MENU[i])
             if self.MENU[-1] != self.MENU[i]:
-                self.mlx.mlx_string_put((self.WIDTH + self.MAINMENU_WIDTH) // 2, y_pos, 0xFFFFFF, self.MENU[i + 1])
+                self.mlx.mlx_string_put(
+                    (self.WIDTH + self.MAINMENU_WIDTH) // 2,
+                    y_pos,
+                    0xFFFFFF,
+                    self.MENU[i + 1]
+                )
         self.mlx.mlx_do_sync()
 
     def __key_how(self, key: int, mlx_param: Mlx) -> None:
@@ -255,7 +274,9 @@ class Drawer():
         path_coords = set()
         if isinstance(directions, list):
             for direction in directions:
-                path_coords.update(self.__get_path_coords(enter, exit, direction))
+                path_coords.update(
+                    self.__get_path_coords(enter, exit, direction)
+                )
             return path_coords
         x, y = enter
         for step in directions:
@@ -271,7 +292,11 @@ class Drawer():
                     y -= move_y
         return path_coords
 
-    def __render_path_cells(self, long: set[tuple[int, int]], color: ColorCell):
+    def __render_path_cells(
+            self,
+            long: set[tuple[int, int]],
+            color: ColorCell
+    ) -> None:
         offset = int(self.CELL_SIZE * 0.15)
         inner_size = int(self.CELL_SIZE * 0.7)
         pixel_color = self.ALL_COLORS.get_color(color.value)
@@ -292,7 +317,7 @@ class Drawer():
     def __undrawway(self, long: set[tuple[int, int]]) -> None:
         self.__render_path_cells(long, ColorCell.FLOOR)
 
-    def visualizer(self, mlx: MlxPy = None) -> None:
+    def visualizer(self, mlx: MlxPy | None = None) -> None:
         if not mlx:
             self.mlx = MlxPy()
         else:
@@ -312,16 +337,20 @@ class Drawer():
             self.maze.data.EXIT,
             self.content
         ))
-        self.mlx.load_window(self.__key_how, self.__menu, self.MARGIN, self.MAINMENU_WIDTH)
+        self.mlx.load_window(
+            self.__key_how,
+            self.__menu, self.MARGIN,
+            self.MAINMENU_WIDTH
+        )
 
         self.mlx.close_window()
 
-    def __maze3D(self, player: Player, map: Raycaster, param: Mlx):
+    def __maze3D(self, player: Player, map: Raycaster, param: Mlx) -> int:
         teclas = self.mlx.key_pressed()
         if but.BUTTON_SCAPE.value in teclas:
             self.mlx.close_window()
             param.mlx_loop_exit(param.mlx_ptr)
-            return
+            return 0
         player.update(teclas, param)
         map.cast_all_rays()
         map.render(self.mlx)

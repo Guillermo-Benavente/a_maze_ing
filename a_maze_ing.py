@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # from os import path, makedirs
-from time import perf_counter, sleep
+from time import perf_counter
 from parser_config import Data, lector
 from maze.maze_generator import MazeGenerator
 from pydantic import ValidationError
@@ -13,8 +13,12 @@ from maze_3d.raycaster import Raycaster
 from colors import ColorCell, AllColors
 
 
-def _darken(c: tuple[int, int, int, int], factor: float) -> tuple[int, int, int, int]:
+def _darken(
+        c: tuple[int, int, int, int],
+        factor: float
+) -> tuple[int, int, int, int]:
     return (int(c[0] * factor), int(c[1] * factor), int(c[2] * factor), c[3])
+
 
 def __cube3D(data: Data, maze: MazeGenerator) -> None:
     setings = Data_3D(data)
@@ -38,20 +42,22 @@ def __cube3D(data: Data, maze: MazeGenerator) -> None:
     draw = Drawer(maze)
     draw.visualizer_3d(play, ray)
 
-def __printmaze(data: Data, maze: MazeGenerator) -> None:
+
+def __printmaze(data: Data | None, maze: MazeGenerator) -> None:
     start_time: float = perf_counter()
     mlx = None
     while data is not None:
         draw = Drawer(maze)
         draw.visualizer(mlx)
         data = draw.new_data
-        mlx =  draw.mlx
+        mlx = draw.mlx
         if data:
             maze = MazeGenerator(data)
     end_time: float = perf_counter()
     total_time: float = end_time - start_time
     print("\n¡Proceso completado!")
     print(f"Tiempo total: {total_time:.4f} segundos")
+
 
 if __name__ == "__main__":
     if len(argv[1:]) != 1:
@@ -64,7 +70,7 @@ if __name__ == "__main__":
             __cube3D(data, maze)
         else:
             __printmaze(data, maze)
-    
+
     except (ValidationError, ValueError, AssertionError, PermissionError) as e:
         if isinstance(e, ValidationError):
             for error in e.errors():

@@ -12,6 +12,10 @@ LIST = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT", "SEED",
         "ALGORITM", "VISUAL3D"]
 
 
+def asignate(prub: list[list[Any]]) -> bool:
+    return True
+
+
 class Data(BaseModel):
 
     WIDTH: int = Field(..., gt=0)
@@ -22,7 +26,7 @@ class Data(BaseModel):
     PERFECT: bool
     VISUAL3D: bool
     SEED: int = Field(default_factory=lambda: randint(1, maxs))
-    ALGORITM: Callable[..., Any] | None = None
+    ALGORITM: Callable[..., Any] = asignate
 
     @model_validator(mode="before")
     @classmethod
@@ -46,7 +50,7 @@ class Data(BaseModel):
             sol.update({"EXIT": exits})
         if isinstance(data_3d.get("OUTPUT_FILE"), str):
             assert argv[1] != data_3d["OUTPUT_FILE"], ("the output and input"
-                                                     " is the same")
+                                                       " is the same")
             sol.update({"OUTPUT_FILE": data_3d["OUTPUT_FILE"]})
         if isinstance(data_3d.get("PERFECT"), str):
             value = data_3d["PERFECT"].lower()
@@ -75,7 +79,7 @@ class Data(BaseModel):
         assert 0 <= y2 < self.HEIGHT, "EXIT: y fuera de rango"
         assert x2 != x or y2 != y, "EXIT: is the same that ENTRY"
         assert self.OUTPUT_FILE.endswith(".txt"), "OUTPUT_FILE isn't a txt"
-        if not self.ALGORITM:
+        if isinstance(self.ALGORITM([]), bool):
             self.ALGORITM = partial(found_all, self.ENTRY, self.EXIT)
         return self
 

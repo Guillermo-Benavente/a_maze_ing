@@ -3,6 +3,10 @@ from .wall import Wall
 
 
 class Cell():
+    """
+    Represents an individual grid node within the maze structure,
+    managing its properties and encoding.
+    """
     hexadecimal: str
     binary: int
     zone_id: int | None
@@ -12,6 +16,10 @@ class Cell():
     walls: Wall
 
     def __init__(self, position: tuple[int, int]) -> None:
+        """
+        Initializes a maze cell at a specific coordinate and
+        triggers its initial wall hexadecimal encoding.
+        """
         self.position = position
         self.binary = 0
         self.zone_id = None
@@ -21,6 +29,10 @@ class Cell():
         self.encode_walls()
 
     def encode_walls(self) -> None:
+        """
+        Calculates a bitmask based on active walls and converts
+        it into a single uppercase hexadecimal character.
+        """
         self.binary = 0
         if self.walls.north:
             self.binary |= 8

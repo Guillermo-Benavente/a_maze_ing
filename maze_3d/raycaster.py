@@ -1,4 +1,6 @@
-from .ray import Ray, Player, Map
+from .ray import Ray
+from .player import Player
+from .map import Map
 from mlx_py import MlxPy
 from maze.enums import CellType
 from maze.cell import Cell
@@ -48,20 +50,36 @@ class Raycaster:
     def cast_all_rays(self) -> None:
         self.rays = []
         settings = self.map.setings
-        ray_angle = self.player.transform.rotation_angle - (settings.VISION / 2)
+        rotation: float = self.player.transform.rotation_angle
+        ray_angle = rotation - (settings.VISION / 2)
         for _ in range(settings.NUM_RAYS):
-            ray = Ray(ray_angle, self.player, self.map, self.wall_n, self.wall_s)
+            ray = Ray(
+                ray_angle,
+                self.player,
+                self.map,
+                self.wall_n,
+                self.wall_s
+            )
             ray.cast()
             self.rays.append(ray)
             ray_angle += settings.VISION / settings.NUM_RAYS
-        self.center_ray = Ray(self.player.transform.rotation_angle, self.player, self.map, self.wall_n, self.wall_s)
+        self.center_ray = Ray(
+            rotation,
+            self.player,
+            self.map,
+            self.wall_n,
+            self.wall_s
+        )
         self.center_ray.cast()
 
     def _get_cell_indices(self, ray: Ray) -> tuple[int, int]:
         cell_size = self.map.setings.CELS_SIZE
         return int(ray.hit.x // cell_size), int(ray.hit.y // cell_size)
 
-    def _get_special_cell_color(self, cell: Cell) -> tuple[int, int, int, int] | None:
+    def _get_special_cell_color(
+            self,
+            cell: Cell
+    ) -> tuple[int, int, int, int] | None:
         if cell is None:
             return None
         if CellType.ENTRY in cell.cell_type:
@@ -88,7 +106,11 @@ class Raycaster:
             case _:
                 return None
 
-    def _get_wall_color(self, ray: Ray, cell) -> tuple[int, int, int, int]:
+    def _get_wall_color(
+            self,
+            ray: Ray,
+            cell: Cell | None
+    ) -> tuple[int, int, int, int]:
         if cell is not None:
             color = self._get_special_cell_color(cell)
             if color is not None:
@@ -104,7 +126,13 @@ class Raycaster:
     def _wall_color_by_side(self, ray: Ray) -> tuple[int, int, int, int]:
         return getattr(self, f"wall_{ray.hit.side.lower()}", self.wall_n)
 
-    def _render_ray_strip(self, mlx: MlxPy, ray: Ray, x_pos: int, resolution: int) -> None:
+    def _render_ray_strip(
+            self,
+            mlx: MlxPy,
+            ray: Ray,
+            x_pos: int,
+            resolution: int
+    ) -> None:
         settings = self.map.setings
         line_height = (settings.CELS_SIZE / ray.hit.distance) * 415
         draw_begin = (settings.WINDOW_HEIGHT / 2) - (line_height / 2)
@@ -115,7 +143,8 @@ class Raycaster:
         if draw_begin + draw_height > settings.WINDOW_HEIGHT:
             draw_height = settings.WINDOW_HEIGHT - draw_begin
         map_x, map_y = self._get_cell_indices(ray)
-        if 0 <= map_x < settings.data.WIDTH and 0 <= map_y < settings.data.HEIGHT:
+        if (0 <= map_x < settings.data.WIDTH and
+           0 <= map_y < settings.data.HEIGHT):
             cell = self.map.maze[map_y][map_x]
         else:
             cell = None
@@ -130,8 +159,20 @@ class Raycaster:
 
     def render(self, mlx: MlxPy) -> None:
         settings = self.map.setings
-        mlx.flat_canvas.draw_rectangle(0, 0, settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT // 2, (0, 0, 0, 0xFF))
-        mlx.flat_canvas.draw_rectangle(0, settings.WINDOW_HEIGHT // 2, settings.WINDOW_WIDTH, settings.WINDOW_HEIGHT, self.floor)
+        mlx.flat_canvas.draw_rectangle(
+            0,
+            0,
+            settings.WINDOW_WIDTH,
+            settings.WINDOW_HEIGHT // 2,
+            (0, 0, 0, 0xFF)
+        )
+        mlx.flat_canvas.draw_rectangle(
+            0,
+            settings.WINDOW_HEIGHT // 2,
+            settings.WINDOW_WIDTH,
+            settings.WINDOW_HEIGHT,
+            self.floor
+        )
         resolution = settings.RESOLUTION
         for i, ray in enumerate(self.rays):
             self._render_ray_strip(mlx, ray, int(i * resolution), resolution)

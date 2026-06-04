@@ -6,8 +6,11 @@ from .enums import CellType, LimitWallType
 from .cell import Cell
 
 
-
 class MazeGenerator():
+    """
+    Handles the creation, grid management,
+    outer boundary placement, and file rendering of the maze.
+    """
     maze: list[list[Cell]]
     data: Data
     solution: str | None
@@ -15,6 +18,10 @@ class MazeGenerator():
     special_cells: list[tuple[int, int, Cell]]
 
     def __init__(self, data: Data) -> None:
+        """
+        Sets up the grid, builds paths/boundaries,
+        executes the mining lifecycle, and outputs the result document.
+        """
         from .maze_miner import MazeMiner
         self.maze = [
             [
@@ -30,13 +37,16 @@ class MazeGenerator():
         self.algoritm = self.data.ALGORITM(self.maze)
         deque(self.algoritm["algoritm"](), maxlen=0)
         if len(self.algoritm["list"]()) != 0:
-           self.solution = self.algoritm["sorter"]()
+            self.solution = self.algoritm["sorter"]()
         else:
-           self.solution = None
-        # self.solution = ""
+            self.solution = None
         self._generatedoc()
 
     def _generatedoc(self) -> None:
+        """
+        Writes the final hexadecimal layout,
+        entry/exit vectors, and path solution to the designated output file.
+        """
         with open(self.data.OUTPUT_FILE, "w") as fd:
             for i in self.maze:
                 for j in i:
@@ -49,6 +59,10 @@ class MazeGenerator():
             print(self.solution, file=fd)
 
     def _create_maze(self) -> None:
+        """
+        Validates grid dimensions and coordinates the layout
+        setup for entries, exits, limits, and patterns.
+        """
         start_height: int = 0
         start_width: int = 0
         if self.data.WIDTH <= 7 and self.data.HEIGHT <= 5:
@@ -78,6 +92,10 @@ class MazeGenerator():
         start_height: int,
         start_width: int
     ) -> None:
+        """
+        Flags specific coordinates to draw a '42' restriction
+        layout while ensuring no overlap with start/end zones.
+        """
         if self.data.WIDTH <= 7 or self.data.HEIGHT <= 5:
             return
         for y in range(5):
@@ -106,6 +124,10 @@ class MazeGenerator():
                     self.special_cells.append((width, height, cell))
 
     def _create_limits(self) -> None:
+        """
+        Iterates through outer rows and columns to mark boundary
+        structures and map their localized wall directions.
+        """
         height: int = self.data.HEIGHT
         width: int = self.data.WIDTH
 
@@ -125,6 +147,10 @@ class MazeGenerator():
             east.limit_wall_type.append(LimitWallType.EAST)
 
     def _search_inout(self) -> None:
+        """
+        Locates the starting entry and ending exit coordinates on
+        the grid, modifying their types accordingly.
+        """
         x_entry: int
         y_entry: int
         x_exit: int
@@ -139,12 +165,20 @@ class MazeGenerator():
         self.special_cells.append((x_exit, y_exit, exit_cell))
 
     def view_maze(self) -> None:
+        """
+        Outputs a raw stream of the entire maze's hexadecimal
+        representations directly to the standard console.
+        """
         for height in range(self.data.HEIGHT):
             for width in range(self.data.WIDTH):
                 print(self.maze[height][width].hexadecimal, end="")
             print()
 
     def view_maze_ascii(self, file: TextIO = stdout) -> None:
+        """
+        Renders a highly descriptive ASCII art representation of the
+        maze structure, highlighting walls and checkpoints.
+        """
         WALL_H: str = "---"
         WALL_V: str = "|"
         CORNER: str = "+"

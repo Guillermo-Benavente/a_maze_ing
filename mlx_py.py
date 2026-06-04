@@ -1,5 +1,5 @@
 from typing import Any, Set
-from mlx import Mlx
+from mlx import Mlx  # type: ignore
 
 
 class FlatCanvas:
@@ -20,14 +20,16 @@ class FlatCanvas:
         row_bytes_len = width * self.BYTES_PER_PIXEL
         for current_row in range(height):
             start_byte_address = current_row * self.line_size
-            self.bytes[start_byte_address : start_byte_address + row_bytes_len] = color_row
+            self.bytes[
+                start_byte_address: start_byte_address + row_bytes_len
+            ] = color_row
 
     def draw_rectangle(
-        self, 
-        origin_x: int, 
-        origin_y: int, 
-        width: int, 
-        height: int, 
+        self,
+        origin_x: int,
+        origin_y: int,
+        width: int,
+        height: int,
         color: tuple[int, int, int, int]
     ) -> None:
         color_row: bytes = bytes(color) * width
@@ -37,23 +39,26 @@ class FlatCanvas:
                 (origin_y + current_row) * self.line_size
                 + origin_x * self.BYTES_PER_PIXEL
             )
-            if start_byte_address >= 0 and start_byte_address + row_bytes_len <= len(self.bytes):
-                self.bytes[start_byte_address : start_byte_address + row_bytes_len] = color_row
+            if (start_byte_address >= 0 and
+               start_byte_address + row_bytes_len <= len(self.bytes)):
+                self.bytes[
+                    start_byte_address: start_byte_address + row_bytes_len
+                ] = color_row
 
     def draw_horizontal_line(
-        self, 
-        origin_x: int, 
-        origin_y: int, 
-        length: int, 
+        self,
+        origin_x: int,
+        origin_y: int,
+        length: int,
         color: tuple[int, int, int, int]
     ) -> None:
         self.draw_rectangle(origin_x, origin_y, length, 1, color)
 
     def draw_vertical_line(
-        self, 
-        origin_x: int, 
-        origin_y: int,  
-        length: int, 
+        self,
+        origin_x: int,
+        origin_y: int,
+        length: int,
         color: tuple[int, int, int, int]
     ) -> None:
         color_bytes: bytes = bytes(color)
@@ -62,7 +67,9 @@ class FlatCanvas:
                 (origin_y + current_row) * self.line_size
                 + origin_x * self.BYTES_PER_PIXEL
             )
-            self.bytes[start_byte_address : start_byte_address + self.BYTES_PER_PIXEL] = color_bytes
+            self.bytes[
+                start_byte_address: start_byte_address + self.BYTES_PER_PIXEL
+            ] = color_bytes
 
 
 class MlxPy:
@@ -71,7 +78,6 @@ class MlxPy:
     window: Any
     image: Any
     flat_canvas: FlatCanvas
-
 
     def __init__(self) -> None:
         self.mlx = Mlx()
@@ -96,21 +102,25 @@ class MlxPy:
         title: str,
         width: int,
         height: int,
-        menu_w,
-        menu_h,
+        menu_w: int,
+        menu_h: int,
         margin: int = 0
     ) -> None:
-        self.window = self.mlx_new_window(title, width + menu_w, height + menu_h, margin)
+        self.window = self.mlx_new_window(
+            title, width + menu_w,
+            height + menu_h,
+            margin
+        )
         self.image = self.mlx_new_image(width, height)
         self.flat_canvas = self.mlx_get_data_addr()
-    
+
     def load_window(
         self,
         callback: Any,
         menu: Any,
         initial_point: int = 0,
         menu_w: int = 0
-    ):
+    ) -> None:
         self.mlx_put_image_to_window(initial_point, menu_w)
         self.mlx_expose_hook(menu)
         self.mlx_do_sync()
@@ -134,8 +144,8 @@ class MlxPy:
 
     def mlx_new_image(
         self,
-        image_width,
-        image_height
+        image_width: int,
+        image_height: int
     ) -> Any:
         return self.mlx.mlx_new_image(
             self.mlx_ptr,
@@ -149,8 +159,12 @@ class MlxPy:
             size_line, _
         ] = self.mlx.mlx_get_data_addr(self.image)
         return FlatCanvas((bytes, size_line))
-    
-    def mlx_put_image_to_window(self, initial_point: int, menu_w: int = 0) -> None:
+
+    def mlx_put_image_to_window(
+            self,
+            initial_point: int,
+            menu_w: int = 0
+    ) -> None:
         self.mlx.mlx_put_image_to_window(
             self.mlx_ptr,
             self.window,
@@ -164,36 +178,34 @@ class MlxPy:
 
     def mlx_loop(self) -> None:
         self.mlx.mlx_loop(self.mlx_ptr)
-    
+
     def mlx_do_sync(self) -> None:
         self.mlx.mlx_do_sync(self.mlx_ptr)
 
     def mlx_expose_hook(self, callback: Any) -> None:
         self.mlx.mlx_expose_hook(self.window, callback, self.mlx)
-        
+
     def mlx_string_put(self, x: int, y: int, color: Any, text: str) -> None:
         self.mlx.mlx_string_put(self.mlx_ptr, self.window, x, y, color, text)
 
     def mlx_loop_exit(self) -> None:
         self.mlx.mlx_loop_exit(self.mlx_ptr)
 
-
     def load_window_3d(
         self,
         callback: Any,
         initial_point: int = 0
-    ):
+    ) -> None:
         self.mlx_put_image_to_window(initial_point)
         self.mlx_do_sync()
         self.setup_input_hooks(callback)
         self.mlx_loop()
 
-
     def setup_input_hooks(self, loop_callback: Any) -> None:
         self.mlx.mlx_hook(self.window, 2, 1, self.__key_press, None)
-        
+
         self.mlx.mlx_hook(self.window, 3, 2, self.__key_release, None)
-        
+
         self.mlx.mlx_loop_hook(self.mlx_ptr, loop_callback, self.mlx)
 
     def __key_press(self, keycode: int, param: Any) -> None:
