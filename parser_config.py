@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, Field, model_validator
 from typing import Any
 from random import randint
 from sys import maxsize as maxs
@@ -12,7 +12,17 @@ LIST = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT", "SEED",
         "ALGORITM", "VISUAL3D"]
 
 
-def asignate(prub: list[list[Any]]) -> bool:
+def asignate(_: list[list[Any]]) -> bool:
+    """
+    Placeholder validation callback rule for Pydantic
+    ALGORITM instantiation.
+
+    Args:
+        _: list[list[Any]]): Mock environment nested cell structure.
+
+    Returns:
+        bool: Hardcoded evaluation rule confirmation flag (True).
+    """
     return True
 
 
@@ -31,6 +41,17 @@ class Data(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def parser(cls, data_3d: dict[str, str]) -> dict[str, Any]:
+        """
+        Pre-evaluates configuration string datasets, casting value types
+        and resolving application parameters before model parsing.
+
+        Args:
+            data_3d (dict[str, str]): Raw input values parsed from
+                configuration readouts.
+
+        Returns:
+            dict[str, Any]: Typed settings mapping ready for model injection.
+        """
         entry = (0, 0)
         exits = (0, 0)
         sol: dict[str, Any] = {}
@@ -71,6 +92,14 @@ class Data(BaseModel):
 
     @model_validator(mode="after")
     def check_entry(self) -> "Data":
+        """
+        Post-initialization logical validator asserting dimension constraints,
+        distinct entry/exit cells, and output naming conventions.
+
+        Returns:
+            Data: The validated state representation containing certified
+                configuration details.
+        """
         x, y = self.ENTRY
         assert 0 <= x < self.WIDTH, "ENTRY: x fuera de rango"
         assert 0 <= y < self.HEIGHT, "ENTRY: y fuera de rango"
@@ -85,6 +114,21 @@ class Data(BaseModel):
 
 
 def lector(archive: str) -> dict[str, str]:
+    """
+    Reads a dedicated key-value text sheet mapping rules for grid
+    configuration, filtering remarks and ensuring no identifier repeats.
+
+    Args:
+        archive (str): Relative or global string target file path.
+
+    Raises:
+        FileNotFoundError: If the designated document path does not exist.
+        ValueError: If file syntax parsing requirements are violated.
+
+    Returns:
+        dict[str, str]: Isolated configuration identifiers associated
+            with string configurations.
+    """
     sol: dict[str, str] = {}
     try:
         with open(archive, "r") as fd:
@@ -103,17 +147,3 @@ def lector(archive: str) -> dict[str, str]:
         elif part:
             raise ValueError("Bad Sintax")
     return sol
-
-
-if __name__ == "__main__":
-    try:
-        fd = open("hola.txt", "r")
-        fd.close()
-
-    except (ValidationError, ValueError,
-            AssertionError, PermissionError, FileNotFoundError) as e:
-        if isinstance(e, ValidationError):
-            for error in e.errors():
-                print(error["msg"])
-        else:
-            print(e)

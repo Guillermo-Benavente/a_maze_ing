@@ -345,16 +345,26 @@ class Drawer():
 
         self.mlx.close_window()
 
+    def found_exit(self, player: Player) -> bool:
+        pos = player.transform
+        cell = player.map.get_cell(pos.x, pos.y)
+        if isinstance(cell, Cell):
+            return CellType.EXIT in cell.cell_type
+        return False
+
     def __maze3D(self, player: Player, map: Raycaster, param: Mlx) -> int:
         teclas = self.mlx.key_pressed()
-        if but.BUTTON_SCAPE.value in teclas:
+        pos = player.transform
+        if (but.BUTTON_SCAPE.value in teclas or self.found_exit(player)):
             self.mlx.close_window()
             param.mlx_loop_exit(param.mlx_ptr)
             return 0
         player.update(teclas, param)
         map.cast_all_rays()
         map.render(self.mlx)
+        print("\033[H\033[2J", end="")
         self.mlx.mlx_put_image_to_window(self.MARGIN)
+        self.maze.view_maze_ascii(player.map.get_position(pos.x, pos.y))
         return 0
 
     def visualizer_3d(self, player: Player, map: Raycaster) -> None:

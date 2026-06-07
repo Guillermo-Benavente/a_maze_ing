@@ -22,6 +22,10 @@ class Wall():
         """
         Converts the boolean states of the walls into a
         list of binary string representations ('1' or '0').
+
+        Returns:
+            list[str]: Array elements containing string '1' for closed
+                walls, '0' for open.
         """
         return [
             f"{int(self.north)}",

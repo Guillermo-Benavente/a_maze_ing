@@ -21,6 +21,10 @@ class MazeGenerator():
         """
         Sets up the grid, builds paths/boundaries,
         executes the mining lifecycle, and outputs the result document.
+
+        Args:
+            data (Data): The configuration data object containing
+                dimensions and properties.
         """
         from .maze_miner import MazeMiner
         self.maze = [
@@ -34,12 +38,15 @@ class MazeGenerator():
         self.special_cells = []
         self._create_maze()
         MazeMiner(self)
-        self.algoritm = self.data.ALGORITM(self.maze)
-        deque(self.algoritm["algoritm"](), maxlen=0)
-        if len(self.algoritm["list"]()) != 0:
-            self.solution = self.algoritm["sorter"]()
+        if not self.data.VISUAL3D:
+            self.algoritm = self.data.ALGORITM(self.maze)
+            deque(self.algoritm["algoritm"](), maxlen=0)
+            if len(self.algoritm["list"]()) != 0:
+                self.solution = self.algoritm["sorter"]()
+            else:
+                self.solution = None
         else:
-            self.solution = None
+            self.solution = ""
         self._generatedoc()
 
     def _generatedoc(self) -> None:
@@ -95,6 +102,16 @@ class MazeGenerator():
         """
         Flags specific coordinates to draw a '42' restriction
         layout while ensuring no overlap with start/end zones.
+
+        Args:
+            start_height (int): Row index to start
+                rendering the '42' pattern.
+            start_width (int): Column index to start
+                rendering the '42' pattern.
+
+        Raises:
+            Exception: If the pattern zone overlaps with
+                the entry or exit cells.
         """
         if self.data.WIDTH <= 7 or self.data.HEIGHT <= 5:
             return
@@ -174,17 +191,27 @@ class MazeGenerator():
                 print(self.maze[height][width].hexadecimal, end="")
             print()
 
-    def view_maze_ascii(self, file: TextIO = stdout) -> None:
+    def view_maze_ascii(
+        self,
+        pos: tuple[int, int],
+        file: TextIO = stdout
+    ) -> None:
         """
         Renders a highly descriptive ASCII art representation of the
         maze structure, highlighting walls and checkpoints.
+
+        Args:
+            pos (tuple[int, int]): Current player position (x, y)
+                to render as '_P_'.
+            file (TextIO, optional): IO stream stream where the art will
+                be printed. Defaults to stdout.
         """
         WALL_H: str = "---"
         WALL_V: str = "|"
         CORNER: str = "+"
         EMPTY_H: str = "   "
         EMPTY_V: str = " "
-
+        x, y = pos
         for height in range(self.data.HEIGHT):
             line_top = ""
             line_mid = ""
@@ -202,6 +229,8 @@ class MazeGenerator():
                         content = "[_]"
                     elif CellType.EXIT in cell.cell_type:
                         content = "_H_"
+                    elif x == width and y == height:
+                        content = "_P_"
                     else:
                         content = "   "
                     line_mid += char_w + content

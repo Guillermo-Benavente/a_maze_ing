@@ -19,6 +19,9 @@ class Cell():
         """
         Initializes a maze cell at a specific coordinate and
         triggers its initial wall hexadecimal encoding.
+        Args:
+            position (tuple[int, int]): The (x, y) coordinates
+            of the cell in the grid.
         """
         self.position = position
         self.binary = 0

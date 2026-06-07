@@ -6,7 +6,21 @@ from numpy import abs
 def operate(num: Cell, thinks: list[tuple[str, int, int]],
             order: list[tuple[str, int, int]]
             ) -> list[tuple[str, int, int]]:
+    """
+    Evaluates which walls of a cell are open (North, East, South, West)
+    and appends the corresponding directionaltuples to the allowed order list.
 
+    Args:
+        num (Cell): The target maze cell being inspected.
+        thinks (list[tuple[str, int, int]]): Base directional
+            offset tuples (N, E, S, W).
+        order (list[tuple[str, int, int]]): The accumulation list
+            where valid movements are added.
+
+    Returns:
+        list[tuple[str, int, int]]: The updated list containing
+            the available valid paths.
+    """
     if not num.walls.north:
         order.append(thinks[0])
     if not num.walls.east:
@@ -19,6 +33,18 @@ def operate(num: Cell, thinks: list[tuple[str, int, int]],
 
 
 def generateweight(local: tuple[int, int], exits: tuple[int, int]) -> int:
+    """
+    Calculates the Manhattan distance heuristic from a localized position
+    to the designated exit cell of the maze.
+
+    Args:
+        local (tuple[int, int]): Current spatial coordinates (x, y).
+        exits (tuple[int, int]): Target exit coordinates (x, y).
+
+    Returns:
+        int: The calculated total Manhattan weight or remaining
+            distance estimate.
+    """
     x, y = local
     ex, ey = exits
     return int(abs(x - ex) + abs(y - ey))
@@ -28,6 +54,25 @@ def operate2(num: Cell, thinks: list[tuple[str, int, int]],
              order: list[tuple[str, int, int]],
              exits: tuple[int, int], pos: tuple[int, int]
              ) -> list[tuple[str, int, int]]:
+    """
+    Evaluates open adjacent cells similar to `operate`, but sorts the
+    resulting movements by prioritizing choices that reduce
+    Manhattan distance to the exit.
+
+    Args:
+        num (Cell): The target maze cell being inspected.
+        thinks (list[tuple[str, int, int]]): Base directional offset
+            tuples (N, E, S, W).
+        order (list[tuple[str, int, int]]): The accumulation list where
+            sorted movements are added.
+        exits (tuple[int, int]): Target exit coordinates of the maze.
+        pos (tuple[int, int]): Current absolute coordinates before
+            applying offsets.
+
+    Returns:
+        list[tuple[str, int, int]]: Movement tuples sorted from
+            lowest to highest heuristic weight.
+    """
     operations: list[dict[str, Any]] = []
     lis = [
         not num.walls.north,
@@ -51,12 +96,37 @@ def operate2(num: Cell, thinks: list[tuple[str, int, int]],
 
 def found_all(enter: tuple[int, int], exits: tuple[int, int],
               maps: list[list[Cell]]) -> dict[str, Callable[..., Any]]:
+    """
+    Solves the maze using a standard Depth-First Search (DFS) backtracker.
+    Explores paths sequentially without a heuristic weight priority.
+
+    Args:
+        enter (tuple[int, int]): The starting point coordinates (x, y).
+        exits (tuple[int, int]): The destination exit coordinates (x, y).
+        maps (list[list[Cell]]): The entire 2D matrix structure of the maze.
+
+    Returns:
+        dict[str, Callable[..., Any]]: A dictionary containing operational
+            handles for:
+                - "algoritm": The step-by-step path Generator.
+                - "list": Method to retrieve all successful solution paths.
+                - "sorter": Method to fetch the shortest solution path.
+    """
     texts: list[str] = []
     enx, eny = enter
     exix, exiy = exits
     dirs = [(('N', 0, -1)), (('E', 1, 0)), (('S', 0, 1)), (('W', -1, 0))]
 
     def algoritm() -> Generator[str, None, None]:
+        """
+        Executes a stack-based DFS traversal. Yields string step
+        streams and records completed paths upon hitting target
+        exit points.
+
+        Yields:
+            str: Accumulated character direction log step up to the
+                current cell frame.
+        """
         nonlocal texts
         texts = []
         visited: set[tuple[int, int]] = set()
@@ -89,10 +159,23 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
                 stack.append((text + te, nx, ny, vecinos_sig, 0))
 
     def sorter() -> str:
-        sol = sorted(texts, key=lambda x: len(x))
-        return sol[0]
+        """
+        Sorts discovered paths by character string length and returns
+        the shortest path.
+
+        Returns:
+            str: The path string requiring the fewest directional steps.
+        """
+        return lista()[0]
 
     def lista() -> list[str]:
+        """
+        Collects and sorts all valid found solution path strings by
+        total length.
+
+        Returns:
+            list[str]: An ordered collection of path solutions.
+        """
         sol = sorted(texts, key=lambda x: len(x))
         return sol
 
@@ -106,12 +189,38 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
 
 def found_weight(enter: tuple[int, int], exits: tuple[int, int],
                  maps: list[list[Cell]]) -> dict[str, Callable[..., Any]]:
+    """
+    Solves the maze via an informed Depth-First Search strategy by prioritizing
+    open nodes that feature a smaller Manhattan distance weight towards the
+    destination.
+
+    Args:
+        enter (tuple[int, int]): The starting point coordinates (x, y).
+        exits (tuple[int, int]): The destination exit coordinates (x, y).
+        maps (list[list[Cell]]): The entire 2D matrix structure of the maze.
+
+    Returns:
+        dict[str, Callable[..., Any]]: A dictionary containing operational
+            handles for:
+                - "algoritm": The step-by-step heuristic Generator.
+                - "list": Method to retrieve all successful solution paths.
+                - "sorter": Method to fetch the shortest solution path.
+    """
     texts: list[str] = []
     enx, eny = enter
     exix, exiy = exits
     dirs = [('N', 0, -1), ('E', 1, 0), ('S', 0, 1), ('W', -1, 0)]
 
     def algoritm() -> Generator[str, None, None]:
+        """
+        Executes a stack-based informed traversal. Yields string step
+        streams and records completed paths upon hitting target
+        exit points.
+
+        Yields:
+            str: Accumulated character direction log step up to the
+                current cell frame.
+        """
         nonlocal texts
         texts = []
         visited: set[tuple[int, int]] = set()
@@ -144,9 +253,24 @@ def found_weight(enter: tuple[int, int], exits: tuple[int, int],
                 stack.append((text + te, nx, ny, vecinos_sig, 0))
 
     def sorter() -> str:
+        """
+        Sorts discovered paths by character string length and returns
+        the shortest path.
+
+        Returns:
+            str: The path string requiring the fewest directional
+                steps.
+        """
         return lista()[0]
 
     def lista() -> list[str]:
+        """
+        Collects and sorts all valid found solution path strings by
+        total length.
+
+        Returns:
+            list[str]: An ordered collection of path solutions.
+        """
         sol = sorted(texts, key=lambda x: len(x))
         return sol
 

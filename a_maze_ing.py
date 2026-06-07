@@ -38,7 +38,6 @@ def __cube3D(data: Data, maze: MazeGenerator) -> None:
     colors1.all_colors()
     ray = Raycaster(play, map, wall_n, wall_s, wall_e, wall_w, colors3,
                     floor_entry, floor_exit, floor_42, wall_42)
-    maze.view_maze_ascii()
     draw = Drawer(maze)
     draw.visualizer_3d(play, ray)
 

@@ -18,6 +18,9 @@ class MinerCell:
         """
         Initializes a tracking node wrapper for a cell,
         defining it as alive by default.
+
+        Args:
+            cell (Cell): The grid cell instance to track.
         """
         self.cell = cell
         self.is_dead = False
@@ -40,6 +43,10 @@ class MazeMiner():
         """
         Binds the source maze generator, seeds the global
         random generator, and initiates the mining execution.
+
+        Args:
+            maze (MazeGenerator): The main maze generator
+                orchestrator instance.
         """
         self.maze_generator = maze
         seed(maze.data.SEED)
@@ -57,6 +64,10 @@ class MazeMiner():
                 limit: LimitWallType,
                 current_cell: Cell
         ) -> bool:
+            """
+            Evaluates validation constraints during imperfect
+            cell structural modifications.
+            """
             if CellType.FORTY_TWO in new_cell.cell_type:
                 return False
             if required_direction is not None:
@@ -120,6 +131,9 @@ class MazeMiner():
         """
         Scans the inner segments of the layout to aggregate and
         return a listing of cells wrapped by three active walls.
+
+        Returns:
+            list[Cell]: Collection of dead-end cell references.
         """
         dead_ends: list[Cell] = []
         for row in self.maze_generator.maze:
@@ -142,6 +156,10 @@ class MazeMiner():
         """
         Evaluates tracking registries to confirm if any
         miner agent path remains unblocked and active.
+
+        Returns:
+            bool: True if at least one tracked miner cell
+                is still active, False otherwise.
         """
         for miner_list in self.mined_cells:
             for wrapper in miner_list:
@@ -153,6 +171,9 @@ class MazeMiner():
         """
         Distributes random coordinates to serve as unique
         initial spawning nodes for deployed miner families.
+
+        Args:
+            miners (int): Total number of agents/miner slots to spawn.
         """
         valid_cells: list[Cell] = [
             cell
@@ -171,8 +192,23 @@ class MazeMiner():
         """
         Iterates over miner references to randomly assign
         a proportional volume of execution expansions per batch cycle.
+
+        Args:
+            miners (int): Total number of existing miner agents.
         """
         def perfect_rule(new_cell: Cell, *_: Any) -> bool:
+            """
+            Enforces disjoint-set checking for a flawless,
+            non-looping maze rule.
+
+            Args:
+                new_cell (Cell): The candidate cell for
+                    mining expansion.
+
+            Returns:
+                    bool: True if the cell can be mined into,
+                        False if it would
+            """
             return self._try_cell_fusion(new_cell, miner)
         maze: list[list[Cell]] = self.maze_generator.maze
         for miner in range(miners):
@@ -195,6 +231,18 @@ class MazeMiner():
         """
         Shuffles and scans local directions to try to dig into
         a neighboring block, turning off intersecting walls on success.
+
+        Args:
+            maze (list[list[Cell]]): Reference matrix representing
+                the full maze grid.
+            cell_mined (MinerCell): The miner cell object targeting
+                nearby spaces.
+            can_mine_condition (Callable): Criteria checking routine
+                defining path validity.
+
+        Returns:
+            bool: True if a neighboring cell wall was successfully mined,
+                False otherwise.
         """
         x: int
         y: int
@@ -233,6 +281,14 @@ class MazeMiner():
         """
         Claims an untracked node into a specific miner field
         or merges distinct disjoint sets if their paths cross.
+
+        Args:
+            adjacent_cell (Cell): Neighboring cell to absorb or merge with.
+            miner (int): Active tracking identifier of the miner agent.
+
+        Returns:
+            bool: True if cell was newly mapped or merged safely,
+                False if blocked or linked.
         """
         if CellType.FORTY_TWO in adjacent_cell.cell_type:
             return False
@@ -256,6 +312,12 @@ class MazeMiner():
         """
         Triggers a recursive path-compression lookup
         (Union-Find structure)to track down the absolute root zone ID.
+
+        Args:
+            m_id (int | None): The specific miner set identifier to examine.
+
+        Returns:
+            int | None: The master root zone ID, or None if input matches None.
         """
         if m_id is None:
             return None

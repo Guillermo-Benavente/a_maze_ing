@@ -28,9 +28,13 @@ class Map():
             return None
         return self.maze[coord_y][coord_x]
 
-    def has_wall_at(self, x: float, y: float, direction: str) -> bool:
+    def get_position(self, x: float, y: float) -> tuple[int, int]:
         coord_x = int(x // self.cell_size)
         coord_y = int(y // self.cell_size)
+        return (coord_x, coord_y)
+
+    def has_wall_at(self, x: float, y: float, direction: str) -> bool:
+        coord_x, coord_y = self.get_position(x, y)
         if (
             coord_x < 0
             or coord_x >= self.maze_width
