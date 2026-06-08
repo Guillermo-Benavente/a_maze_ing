@@ -4,7 +4,7 @@ from maze_3d.raycaster import Raycaster
 from functools import partial
 from time import sleep
 from collections import deque
-from mlx import Mlx  # type: ignore
+from mlx import Mlx
 from mlx_py import MlxPy, FlatCanvas
 from maze.cell import Cell
 from maze.enums import CellType
@@ -29,6 +29,8 @@ class Drawer():
     HEIGHT: int
     WALL_THICKNESS: int
     ALL_COLORS = AllColors()
+    content: str | list[str] | None
+    new_data: Data | None
     MOVEMENTS = {
         "N": (0, -1),
         "W": (-1, 0),
@@ -56,6 +58,7 @@ class Drawer():
         self.__optimize_size(maze, ancho, alto)
         self.WIDTH = maze.data.WIDTH * self.CELL_SIZE
         self.HEIGHT = maze.data.HEIGHT * self.CELL_SIZE
+        self.show_path = True
         self.MENU = [
             "1 - Change all Colors",
             "2 - Change wall Colors",
@@ -67,6 +70,7 @@ class Drawer():
             "8 - New",
             "9 - Animation",
             "0 - All ways",
+            "P - Show/Hide path",
             "ESC - Exit"
             ]
         self.MAINMENU_HEIGHT = 20 + 20 * (len(self.MENU)//2 + 2)
@@ -242,6 +246,19 @@ class Drawer():
             key (int): The integer value mapping to the keycode pressed.
             mlx_param (Mlx): Root environment reference parameters.
         """
+        assert self.maze.algoritm is not None
+        if key == but.BUTTON_P.value:
+            self.show_path = not self.show_path
+            self.__draw_maze()
+            if self.show_path and self.content is not None:
+                self.__drawway(self.__get_path_coords(
+                    self.maze.data.ENTRY,
+                    self.maze.data.EXIT,
+                    self.content
+                ))
+            self.mlx.mlx_put_image_to_window(self.MARGIN)
+            self.mlx.mlx_do_sync()
+            return
         if key in (but.BUTTON_1.value,
                    but.BUTTON_2.value,
                    but.BUTTON_3.value,
@@ -320,16 +337,19 @@ class Drawer():
                     ))
                 self.content = self.maze.algoritm["list"]()
             self.__draw_maze()
-            self.__drawway(self.__get_path_coords(
-                self.maze.data.ENTRY,
-                self.maze.data.EXIT,
-                self.content
-            ))
+            if self.show_path and self.content is not None:
+                self.__drawway(self.__get_path_coords(
+                    self.maze.data.ENTRY,
+                    self.maze.data.EXIT,
+                    self.content
+                ))
             self.mlx.mlx_put_image_to_window(self.MARGIN)
             self.mlx.mlx_do_sync()
         if key == but.BUTTON_SCAPE.value:
             self.mlx.close_window()
-            mlx_param.mlx_loop_exit(mlx_param.mlx_ptr)
+            mlx_param.mlx_loop_exit(
+                mlx_param.mlx_ptr
+            )
 
     def __get_path_coords(
             self,
@@ -442,12 +462,14 @@ class Drawer():
             self.MARGIN
         )
         self.content = self.maze.solution
+        self.show_path = True
         self.__draw_maze()
-        self.__drawway(self.__get_path_coords(
-            self.maze.data.ENTRY,
-            self.maze.data.EXIT,
-            self.content
-        ))
+        if self.show_path and self.content is not None:
+            self.__drawway(self.__get_path_coords(
+                self.maze.data.ENTRY,
+                self.maze.data.EXIT,
+                self.content
+            ))
         self.mlx.load_window(
             self.__key_how,
             self.__menu, self.MARGIN,
@@ -493,9 +515,11 @@ class Drawer():
         pos = player.transform
         if (but.BUTTON_SCAPE.value in teclas or self.found_exit(player)):
             self.mlx.close_window()
-            param.mlx_loop_exit(param.mlx_ptr)
+            param.mlx_loop_exit(
+                param.mlx_ptr
+            )
             return 0
-        player.update(teclas, param)
+        player.update(teclas, self.mlx)
         map.cast_all_rays()
         map.render(self.mlx)
         print("\033[H\033[2J", end="")

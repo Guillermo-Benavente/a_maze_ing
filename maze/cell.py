@@ -35,14 +35,21 @@ class Cell():
         """
         Calculates a bitmask based on active walls and converts
         it into a single uppercase hexadecimal character.
+
+        Bit encoding follows the subject specification:
+            Bit 0 (LSB) — North
+            Bit 1       — East
+            Bit 2       — South
+            Bit 3       — West
+        A closed wall sets the bit to 1; an open wall sets it to 0.
         """
         self.binary = 0
         if self.walls.north:
-            self.binary |= 8
-        if self.walls.east:
-            self.binary |= 4
-        if self.walls.south:
-            self.binary |= 2
-        if self.walls.west:
             self.binary |= 1
+        if self.walls.east:
+            self.binary |= 2
+        if self.walls.south:
+            self.binary |= 4
+        if self.walls.west:
+            self.binary |= 8
         self.hexadecimal = f"{self.binary:x}".upper()

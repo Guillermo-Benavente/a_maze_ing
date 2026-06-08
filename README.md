@@ -65,22 +65,34 @@ VISUAL3D=False
 
 ### User Interactions
 
-**Mandatory Features:**
-- **Re-generate Maze**: Press SPACE to generate a new maze with same parameters
-- **Show/Hide Solution Path**: Press 'P' to toggle display of shortest path from entry to exit
-- **Change Wall Colours**: Press 'C' to cycle through different wall color schemes
-- **Configuration Reloading**: Edit the configuration file and the 2D visualizer automatically reloads with the new maze
+**2D Mode (default) Keyboard Controls:**
+- `0` – Show ALL solution paths
+- `1` – Change ALL colors
+- `2` – Change WALL colors
+- `3` – Change ENTRY color
+- `4` – Change WAY (solution path) color
+- `5` – Change EXIT color
+- `6` – Change FLOOR color
+- `7` – Change 42 pattern color
+- `8` – Reload maze from configuration file
+- `9` – Animate solution pathfinding step by step
+- `P` – Show / Hide solution path
+- `ESC` – Exit program
 
-**Keyboard Controls:**
-- **Arrow Keys / WASD**: Move or navigate through the maze
-- **P**: Toggle solution path visualization
-- **C**: Change wall colors
-- **SPACE**: Generate new maze (2D mode)
-- **ESC**: Exit the program
+**3D Mode (first-person) Keyboard Controls:**
+- `W` / `↑` / `Numpad 8` – Move forward
+- `S` / `↓` / `Numpad 2` – Move backward
+- `A` / `←` / `Numpad 4` – Turn left / strafe
+- `D` / `→` / `Numpad 6` – Turn right / strafe
+- `ESC` – Exit program
+- Reach the EXIT cell – Automatically exit the program
+
+**Configuration Reloading:**
+Press `8` in 2D mode to re-read the configuration file and generate a new maze with updated parameters.
 
 **Visual Modes:**
-- **2D Mode** (default): Top-down grid view with maze structure, entry/exit, and optional solution path
-- **3D Mode** (bonus): First-person raycasting exploration through the maze
+- **2D Mode** (default): Top-down grid view with maze structure, entry/exit, paths, and solution highlighting
+- **3D Mode** (bonus): First-person raycasting exploration through the maze with collision detection
 
 ### Output File Format
 
@@ -183,14 +195,14 @@ The project implements a **multi-agent parallel maze mining algorithm** (multipl
 
 ### 1. **Core Maze Generation (`maze/` module)**
    - **Reusability**: Generic cell-based maze representation can adapt to non-rectangular grids
-   - **Usage**: Import `MazeGenerator` class to generate custom mazes with configurable dimensions and algorithms
+   - **Usage**: Import `MazeConfig` and `MazeGenerator` to generate custom mazes with configurable dimensions and algorithms
+   - **Standalone**: The `maze/` module is self-contained with its own lightweight `MazeConfig` dataclass — no external dependencies required
    - **Example**:
    ```python
-   from maze.maze_generator import MazeGenerator
-   from parser_config import Data
+   from maze import MazeConfig, MazeGenerator
    
-   config = Data(WIDTH=50, HEIGHT=50, ENTRY=(0,0), EXIT=(49,49), 
-                 OUTPUT_FILE="my_maze.txt", PERFECT=True, VISUAL3D=False)
+   config = MazeConfig(WIDTH=50, HEIGHT=50, ENTRY=(0,0), EXIT=(49,49),
+                       OUTPUT_FILE="my_maze.txt", PERFECT=True)
    maze = MazeGenerator(config)
    ```
 
@@ -217,7 +229,15 @@ The project implements a **multi-agent parallel maze mining algorithm** (multipl
 
 ### 4. **Configuration System (`parser_config.py`)**
    - **Reusability**: Pydantic-based configuration parser with validation
-   - **Usage**: Template for configurable applications with hot-reloading capabilities
+   - **Usage**: Parses `.txt` config files into a validated `Data` object, convertible to `MazeConfig` via `.to_maze_config()`
+   - **Integration**: Use the parser for file-based config, then convert for maze generation:
+     ```python
+     from parser_config import Data, lector
+     from maze import MazeConfig, MazeGenerator
+
+     data = Data.model_validate(lector("config.txt"))
+     maze = MazeGenerator(data.to_maze_config())
+     ```
 
 ## Reusable Package Distribution
 
@@ -236,18 +256,16 @@ pip install -e .
 ### Using as Imported Module
 
 ```python
-from maze.maze_generator import MazeGenerator
-from parser_config import Data
+from maze import MazeConfig, MazeGenerator
 
 # Create configuration
-config = Data(
+config = MazeConfig(
     WIDTH=50,
     HEIGHT=50,
     ENTRY=(0, 0),
     EXIT=(49, 49),
     OUTPUT_FILE="maze.txt",
     PERFECT=True,
-    VISUAL3D=False
 )
 
 # Generate maze
@@ -261,12 +279,23 @@ solution = maze.solution  # Solution path string (if PERFECT=True)
 # Output file is automatically generated with hexadecimal representation
 ```
 
+**With file-based configuration:**
+```python
+from parser_config import Data, lector
+from maze import MazeGenerator
+
+data = Data.model_validate(lector("config.txt"))
+maze = MazeGenerator(data.to_maze_config())
+```
+
 ### Package Contents
 
 The `mazegen-*` distribution includes:
 - Core maze generation engine (`maze/` module)
-- Configuration parser (`parser_config.py`)
-- Pathfinding algorithms (`algoritm.py`)
+  - `MazeConfig`: Standalone configuration dataclass with built-in validation
+  - `MazeGenerator`: Full maze generation pipeline
+- Standalone pathfinding algorithms (`algoritm.py`)
+- Configuration file parser (`parser_config.py`)
 - Utility modules for cell and wall management
 - Type hints and documentation for IDE support
 - Examples and usage documentation
@@ -337,7 +366,7 @@ The `mazegen-*` distribution includes:
 - **Perfect Mazes**: Single-solution guaranteed pathfinding
 - **Output Format**: Hexadecimal cell encoding with solution path
 - **Visual Representation**: 2D top-down grid display with MLX graphics
-- **User Interactions**: Maze regeneration, path visualization toggle, color changing
+- **User Interactions**: Color customization per element type, solution path animation, multi-path display, configuration reload
 - **Configuration System**: File-based parameters with validation and error handling
 - **Code Reusability**: Standalone MazeGenerator module distributable as pip package
 - **Type Safety**: Full type hints with mypy compliance

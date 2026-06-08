@@ -1,7 +1,8 @@
-from typing import TextIO, Callable, Any
+from collections.abc import Callable
+from typing import TextIO, Any
 from sys import stdout, stderr
 from collections import deque
-from parser_config import Data
+from .config import MazeConfig
 from .enums import CellType, LimitWallType
 from .cell import Cell
 
@@ -12,12 +13,12 @@ class MazeGenerator():
     outer boundary placement, and file rendering of the maze.
     """
     maze: list[list[Cell]]
-    data: Data
+    data: MazeConfig
     solution: str | None
-    algoritm: dict[str, Callable[..., Any]]
+    algoritm: dict[str, Callable[..., Any]] | None
     special_cells: list[tuple[int, int, Cell]]
 
-    def __init__(self, data: Data) -> None:
+    def __init__(self, data: MazeConfig) -> None:
         """
         Sets up the grid, builds paths/boundaries,
         executes the mining lifecycle, and outputs the result document.
@@ -38,7 +39,7 @@ class MazeGenerator():
         self.special_cells = []
         self._create_maze()
         MazeMiner(self)
-        if not self.data.VISUAL3D:
+        if not self.data.VISUAL3D and self.data.ALGORITM is not None:
             self.algoritm = self.data.ALGORITM(self.maze)
             deque(self.algoritm["algoritm"](), maxlen=0)
             if len(self.algoritm["list"]()) != 0:
@@ -46,6 +47,7 @@ class MazeGenerator():
             else:
                 self.solution = None
         else:
+            self.algoritm = None
             self.solution = ""
         self._generatedoc()
 
@@ -217,8 +219,8 @@ class MazeGenerator():
             line_mid = ""
             for width in range(self.data.WIDTH):
                 cell = self.maze[height][width]
-                n = bool(cell.binary & 8)
-                w = bool(cell.binary & 1)
+                n = bool(cell.binary & 1)
+                w = bool(cell.binary & 8)
                 if CellType.FORTY_TWO in cell.cell_type:
                     line_top += "####"
                     line_mid += "####"
@@ -235,7 +237,7 @@ class MazeGenerator():
                         content = "   "
                     line_mid += char_w + content
             last_cell = self.maze[height][-1]
-            e = bool(last_cell.binary & 4)
+            e = bool(last_cell.binary & 2)
             line_top += CORNER
             line_mid += (WALL_V if e else EMPTY_V)
             print(line_top, file=file)
@@ -243,6 +245,6 @@ class MazeGenerator():
         last_row_line = ""
         for width in range(self.data.WIDTH):
             cell = self.maze[self.data.HEIGHT - 1][width]
-            s = bool(cell.binary & 2)
+            s = bool(cell.binary & 4)
             last_row_line += CORNER + (WALL_H if s else EMPTY_H)
         print(last_row_line + CORNER, file=file)

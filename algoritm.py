@@ -1,4 +1,5 @@
-from typing import Callable, Any, Generator
+from collections.abc import Callable
+from typing import Any, Generator
 from maze.cell import Cell
 from numpy import abs
 
@@ -115,7 +116,7 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
     texts: list[str] = []
     enx, eny = enter
     exix, exiy = exits
-    dirs = [(('N', 0, -1)), (('E', 1, 0)), (('S', 0, 1)), (('W', -1, 0))]
+    dirs = [('N', 0, -1), ('E', 1, 0), ('S', 0, 1), ('W', -1, 0)]
 
     def algoritm() -> Generator[str, None, None]:
         """

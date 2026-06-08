@@ -2,10 +2,11 @@ from pydantic import BaseModel, Field, model_validator
 from typing import Any
 from random import randint
 from sys import maxsize as maxs
-from typing import Callable
+from collections.abc import Callable
 from algoritm import found_all, found_weight
 from functools import partial
 from sys import argv
+from maze.config import MazeConfig
 
 
 LIST = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT", "SEED",
@@ -37,6 +38,19 @@ class Data(BaseModel):
     VISUAL3D: bool
     SEED: int = Field(default_factory=lambda: randint(1, maxs))
     ALGORITM: Callable[..., Any] = asignate
+
+    def to_maze_config(self) -> MazeConfig:
+        return MazeConfig(
+            WIDTH=self.WIDTH,
+            HEIGHT=self.HEIGHT,
+            ENTRY=self.ENTRY,
+            EXIT=self.EXIT,
+            OUTPUT_FILE=self.OUTPUT_FILE,
+            PERFECT=self.PERFECT,
+            VISUAL3D=self.VISUAL3D,
+            SEED=self.SEED,
+            ALGORITM=self.ALGORITM,
+        )
 
     @model_validator(mode="before")
     @classmethod

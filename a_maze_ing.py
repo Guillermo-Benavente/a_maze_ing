@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# from os import path, makedirs
 from time import perf_counter
 from parser_config import Data, lector
 from maze.maze_generator import MazeGenerator
@@ -87,7 +86,7 @@ def __printmaze(data: Data | None, maze: MazeGenerator) -> None:
         data = draw.new_data
         mlx = draw.mlx
         if data:
-            maze = MazeGenerator(data)
+            maze = MazeGenerator(data.to_maze_config())
     end_time: float = perf_counter()
     total_time: float = end_time - start_time
     print("\n¡Proceso completado!")
@@ -100,7 +99,7 @@ if __name__ == "__main__":
         exit()
     try:
         data = Data.model_validate(lector(argv[1]))
-        maze: MazeGenerator = MazeGenerator(data)
+        maze: MazeGenerator = MazeGenerator(data.to_maze_config())
         if data.VISUAL3D:
             __cube3D(data, maze)
         else:

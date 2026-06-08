@@ -1,4 +1,5 @@
-from typing import Callable, Any
+from collections.abc import Callable
+from typing import Any
 from random import choice, seed, randint, sample
 from .maze_generator import MazeGenerator
 from .cell import Cell
