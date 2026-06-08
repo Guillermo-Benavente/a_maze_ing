@@ -17,10 +17,32 @@ def _darken(
         c: tuple[int, int, int, int],
         factor: float
 ) -> tuple[int, int, int, int]:
+    """
+    Applies a scalar dimension multiplier factor to the RGB components of a
+    color tuple.
+
+    Used primarily to bake directional shading and depth shadows into
+    the raycasted wall column blocks.
+
+    Args:
+        c (tuple[int, int, int, int]): The source RGBA base color tuple.
+        factor (float): Shading attenuation scale multiplier (0.0 to 1.0).
+
+    Returns:
+        tuple[int, int, int, int]: The shaded destination RGBA color tuple.
+    """
     return (int(c[0] * factor), int(c[1] * factor), int(c[2] * factor), c[3])
 
 
 def __cube3D(data: Data, maze: MazeGenerator) -> None:
+    """
+    Configures structural tracking instances, sets directional ambient shading
+    profiles, and enters the pseudo-3D Raycaster projection camera window loop.
+
+    Args:
+        data (Data): Parsed and validated configuration dataset rules.
+        maze (MazeGenerator): The source maze grid layout tracking structure.
+    """
     setings = Data_3D(data)
     map = Map(maze.maze, setings)
     play = Player(setings, map)
@@ -43,6 +65,20 @@ def __cube3D(data: Data, maze: MazeGenerator) -> None:
 
 
 def __printmaze(data: Data | None, maze: MazeGenerator) -> None:
+    """
+    Launches and manages the interactive 2D top-down grid visualization canvas.
+
+    Enters an execution sequence that allows continuous hot-reloading of new
+    maze parameters on demand when configuration files change. It tracks and
+    prints the overall runtime efficiency metrics to standard output upon
+    final exit.
+
+    Args:
+        data (Data | None): Validated initial configuration instance
+            parameters.
+        maze (MazeGenerator): The generated maze data structure to map on
+            screen.
+    """
     start_time: float = perf_counter()
     mlx = None
     while data is not None:

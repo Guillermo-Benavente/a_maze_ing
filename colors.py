@@ -2,24 +2,64 @@ from enum import Enum
 
 
 class Colors():
+    """
+    Represents an individual dynamic color palette tracker.
+
+    Manages an active index pointer to cycle sequentially through a designated
+    list of internal RGBA color tuples.
+    """
     __pos: int
     __color: list[tuple[int, int, int, int]]
 
     def __init__(self, color: list[tuple[int, int, int, int]]) -> None:
+        """
+        Initializes the color palette tracker, defaulting the index selection
+        to 0.
+
+        Args:
+            color (list[tuple[int, int, int, int]]): A collection of
+                structural BGRA color tuples.
+        """
         self.__pos = 0
         self.__color = color
 
     def get_pos(self) -> int:
+        """
+        Retrieves the current active index pointer of this color palette.
+
+        Returns:
+            int: The current index selection value.
+        """
         return self.__pos
 
     def get_color(self) -> tuple[int, int, int, int]:
+        """
+        Extracts the explicit RGBA color tuple corresponding to the
+            active palette index.
+
+        Returns:
+            tuple[int, int, int, int]: The currently selected
+                color tuple (B, G, R, A).
+        """
         return self.__color[self.get_pos()]
 
     def _set_pos(self, pos: int) -> None:
+        """
+        Manually overrides the active color index position.
+
+        Args:
+            pos (int): The new target index position.
+        """
         self.__pos = pos
 
 
 class BaseColors():
+    """
+    Manages systemic background palettes for standard maze elements.
+
+    Handles a structured mapping of color collections designated for walls,
+    floors, entrances, exits, and solution pathways.
+    """
     color: list[Colors] = []
 
     __wall = [
@@ -65,29 +105,70 @@ class BaseColors():
     lista = [__wall, __floor, __entrance, __exits, __way]
 
     def __init__(self) -> None:
+        """
+        Instantiates base tracking structures and populates the master list
+        by wrapping raw element matrix variants into proper Colors objects.
+        """
         for i in BaseColors.lista:
             self.color.append(Colors(i))
 
     def _all_colors(self) -> None:
+        """
+        Iterates through all registered base element types and advances
+        their internal color palette selection index simultaneously.
+        """
         for i in self.color:
             self.__incrementcolor(i)
 
     def _evol_color(self, pos: int) -> None:
+        """
+        Advances the color index pointer for a single target element type.
+
+        Args:
+            pos (int): The index identifying which category (e.g., WALL, FLOOR)
+                to advance.
+        """
         self.__incrementcolor(self.color[pos])
 
     def __incrementcolor(self, color: Colors) -> None:
+        """
+        Safely increments a palette's position index tracker, rolling back
+        to 0 if it goes past the maximum available threshold.
+
+        Args:
+            color (Colors): The specific dynamic color entity instance to
+                shift.
+        """
         if color.get_pos() == 4:
             color._set_pos(0)
             return
         color._set_pos(color.get_pos() + 1)
 
     def get_color(self, pos: int) -> tuple[int, int, int, int]:
+        """
+        Retrieves the currently selected active RGBA color configuration tuple
+        for a designated component position.
+
+        Args:
+            pos (int): The index referencing the target maze asset component.
+
+        Returns:
+            tuple[int, int, int, int]: The corresponding active BGRA color
+                tuple, or transparent (0,0,0,0) if out of bounds.
+        """
         if 0 <= pos <= 4:
             return self.color[pos].get_color()
         return (0, 0, 0, 0)
 
 
 class AllColors():
+    """
+    The top-level orchestrator class linking and handling all active display
+    palettes.
+
+    Coordinates standard maze layouts alongside secondary special themes,
+    such as the custom animated '42' cellular blocks.
+    """
     al: BaseColors
     lista: list[Colors] = []
     number42 = [
@@ -108,27 +189,68 @@ class AllColors():
     ]
 
     def __init__(self) -> None:
+        """
+        Initializes base configuration arrays, instantiates standard base
+        palettes, and populates secondary tracking arrays with custom '42'
+        thematic variations.
+        """
         self.al = BaseColors()
         for i in self.number42:
             self.lista.append(Colors(i))
 
     def __evol_this(self) -> None:
+        """
+        Private routine triggering individual cyclical position index
+        modifications exclusively for special '42' related asset themes.
+        """
         self.__incrementcolor(self.lista[0])
         self.__incrementcolor(self.lista[1])
 
     def evol_color(self, pos: int) -> None:
+        """
+        Updates and shifts systemic color index paths depending on the
+        requested input category.
+
+        Delegates standard category updates down to BaseColors layers, or
+        shifts '42' themes.
+
+        Args:
+            pos (int): The index identifier targeting which type of assets
+                totransform.
+        """
         if 0 <= pos <= 4:
             self.al._evol_color(pos)
         else:
             self.__evol_this()
 
     def __incrementcolor(self, color: Colors) -> None:
+        """
+        Safely increments a palette's position index tracker, rolling back
+        to 0 if it goes past the maximum available threshold.
+
+        Args:
+            color (Colors): The specific dynamic color entity instance to
+                shift.
+        """
         if color.get_pos() == 4:
             color._set_pos(0)
             return
         color._set_pos(color.get_pos() + 1)
 
     def get_color(self, pos: int) -> tuple[int, int, int, int]:
+        """
+        Performs structural context mapping routing to retrieve active BGRA
+        values across either standard base layers or specialized '42'
+        component entities.
+
+        Args:
+            pos (int): The identifier targeting an explicitly requested cell
+                state type.
+
+        Returns:
+            tuple[int, int, int, int]: The active color structure mapped to
+                the component type, or transparent (0,0,0,0) if unmatched.
+        """
         if 0 <= pos <= 4:
             return self.al.get_color(pos)
         if 6 == pos or pos == 7:
@@ -136,11 +258,19 @@ class AllColors():
         return (0, 0, 0, 0)
 
     def all_colors(self) -> None:
+        """
+        Advances all registered asset palettes uniformly across the board
+        by firing consecutive global shift operations.
+        """
         self.al._all_colors()
         self.evol_color(5)
 
 
 class ColorCell(Enum):
+    """
+    An enumeration system mapping categorical maze components
+    to explicit positional layer offsets.
+    """
     WALL = 0
     FLOOR = 1
     ENTRY = 2

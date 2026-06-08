@@ -28,6 +28,15 @@ INPUT_MAPPING = {
 
 
 def handle_player_input(keys: list[int]) -> tuple[int, int]:
+    """
+    Parses active pressed keyboard buttons and maps them to delta directions.
+
+    Args:
+        keys (list[int]): Collection of raw active keycode entries.
+
+    Returns:
+        tuple[int, int]: Combined move and turn directions clamped to [-1, 1].
+    """
     walk_direction = 0
     turn_direction = 0
     for key in keys:
@@ -40,25 +49,68 @@ def handle_player_input(keys: list[int]) -> tuple[int, int]:
 
 @dataclass
 class Transform:
+    """
+    Represents spatial position and orientation properties in continuous pixel
+    space.
+    """
     x: float
+    """
+    Absolute horizontal sub-pixel coordinate location on the layout canvas.
+    """
+
     y: float
+    """
+    Absolute vertical sub-pixel coordinate location on the layout canvas.
+    """
+
     rotation_angle: float
+    """
+    The current facing viewpoint orientation angle value, in radians.
+    """
 
 
 @dataclass
 class MovementStats:
     radius: int = 3
+    """
+    The safety boundary thickness index assigned to prevent wall clipping.
+    """
+
     move_speed: float = 2.5
+    """
+    Velocity displacement multiplier step size applied per frame update.
+    """
+
     rotation_speed: float = 2.0 * (pi / 180)
+    """
+    Angular rotation scaling step size applied per frame update, in radians.
+    """
 
 
 class Player:
+    """
+    Tracks and updates the continuous camera entity representation.
+
+    Manages input event hooks, handles trigonometric translation steps based on
+    view angles, and isolates bounding wall collision thresholds usin
+    localized grid testing.
+    """
     transform: Transform
     stats: MovementStats
     settings: Data_3D
     map: Map
 
     def __init__(self, settings: Data_3D, map: Map) -> None:
+        """
+        Initializes the player transform context, centering the position
+        precisely within the designated maze entry coordinate block.
+
+        Args:
+            settings (Data_3D): Shared configuration engine settings
+                parameters context.
+            map (Map): Matrix layout structure wrapper containing the core
+                cell arrays.
+        """
         self.settings = settings
         self.map = map
         start_x: float = (settings.data.ENTRY[0] + 0.5) * settings.CELS_SIZE
@@ -68,6 +120,19 @@ class Player:
         self.stats = MovementStats()
 
     def _is_outside_bounds(self, x: float, y: float, radius: int) -> bool:
+        """
+        Verifies if target spatial coordinates breach the absolute outer
+        boundaries of the global map canvas.
+
+        Args:
+            x (float): Horizontal pixel candidate coordinate to verify.
+            y (float): Vertical pixel candidate coordinate to verify.
+            radius (int): The hitbox boundary radius parameter.
+
+        Returns:
+            bool: True if tracking outside allowable layout limits, otherwise
+                False.
+        """
         cell_size: int = self.settings.CELS_SIZE
         max_x: int = self.settings.data.WIDTH * cell_size
         max_y: int = self.settings.data.HEIGHT * cell_size
@@ -86,6 +151,21 @@ class Player:
         x: float,
         y: float
     ) -> bool:
+        """
+        Evaluates active structural boundary parameters of a cell to detect
+        internal hitbox profile overlap.
+
+        Args:
+            cell (Cell): Target grid cell structure to verify against.
+            row (int): The vertical matrix grid tracking index of the cell.
+            col (int): The horizontal matrix grid tracking index of the cell.
+            x (float): Horizontal position coordinate candidate.
+            y (float): Vertical position coordinate candidate.
+
+        Returns:
+            bool: True if candidate coordinates collide with active walls,
+                otherwise False.
+        """
         cell_size: int = self.settings.CELS_SIZE
         radius: int = self.stats.radius
         if cell.walls.east and x + radius > (col + 1) * cell_size:
@@ -104,12 +184,41 @@ class Player:
         radius: int,
         max_limit: int
     ) -> tuple[int, int]:
+        """
+        Calculates localized bounding index scopes to optimize collision
+        iterations.
+
+        Args:
+            target (float): Pixel focus coordinate candidate along a chosen
+                vector axis.
+            radius (int): The player hitbox radius value.
+            max_limit (int): Maximum matrix grid limit boundary
+                (width or height).
+
+        Returns:
+            tuple[int, int]: The minimum and maximum cell index bounds
+                (start, end).
+        """
         cell_size: int = self.settings.CELS_SIZE
         start: int = max(0, int((target - radius) // cell_size))
         end: int = min(max_limit - 1, int((target + radius) // cell_size))
         return (start, end)
 
     def is_colliding(self, target_x: float, target_y: float) -> bool:
+        """
+        Performs optimized grid-aligned collision testing around candidate
+        coordinates.
+
+        Args:
+            target_x (float): Expected destination coordinate along the
+                horizontal axis.
+            target_y (float): Expected destination coordinate along the
+                vertical axis.
+
+        Returns:
+            bool: True if moving into any wall object or outside bounds,
+                otherwise False.
+        """
         radius: int = self.stats.radius
         width: int = self.settings.data.WIDTH
         height: int = self.settings.data.HEIGHT
@@ -125,6 +234,16 @@ class Player:
         return False
 
     def update(self, keys: list[int], param: MlxPy) -> None:
+        """
+        Processes frame ticks, scaling rotation tracking, and executes
+        independent axis movement translation sequences with strict wall
+        collision avoidance rules.
+
+        Args:
+            keys (list[int]): Collection of raw active keycodes caught by
+                window context hooks.
+            param (MlxPy): Root graphical abstraction layer context parameter.
+        """
         _ = param
         walk_direction, turn_direction = handle_player_input(keys)
         self.transform.rotation_angle += (

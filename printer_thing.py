@@ -17,6 +17,14 @@ from buttons import Buttons as but
 
 
 class Drawer():
+    """
+    Orchestrates the 2D pixel grid rendering and the 3D projection layers
+    for the maze application environment.
+
+    Handles window allocations, input event callbacks, interactive color
+    palette evolution matrices, step-by-step path solutions, and interactive
+    menu strings.
+    """
     WIDTH: int
     HEIGHT: int
     WALL_THICKNESS: int
@@ -32,6 +40,15 @@ class Drawer():
     mlx: MlxPy
 
     def __init__(self, maze: MazeGenerator) -> None:
+        """
+        Initializes the drawer instance, calculates optimized resolution
+        layout metrics, and prepares the layout boundaries for the on-screen
+        menu interface.
+
+        Args:
+            maze (MazeGenerator): The source maze tracking instance containing
+                active layouts.
+        """
         self.maze = maze
         self.new_data = None
         ancho = int(os.environ.get("SCREEN_WIDTH", 1920))
@@ -68,6 +85,17 @@ class Drawer():
             tkheight: int,
             size: int = 3
     ) -> None:
+        """
+        Recursively determines the maximum possible cell size scaling factor
+        that cleanly fits within the current hardware monitor bounds.
+
+        Args:
+            maze (MazeGenerator): The source maze structure instance.
+            tkwidth (int): Maximum screen pixel width dimension limits.
+            tkheight (int): Maximum screen pixel height dimension limits.
+            size (int, optional): The cellular scaling multiplier candidate.
+                Defaults to 3.
+        """
         width = maze.data.WIDTH * size
         height = maze.data.HEIGHT * size
         if tkheight > height and tkwidth > width:
@@ -86,6 +114,19 @@ class Drawer():
             cell: Cell,
             is_wall: bool = False
     ) -> tuple[int, int, int, int]:
+        """
+        Extracts the explicit palette RGBA mapping for a cell based on its
+        types and wall layout properties.
+
+        Args:
+            cell (Cell): Target cell to identify color palettes for.
+            is_wall (bool, optional): Determines if requesting wall properties
+                instead of floor surfaces. Defaults to False.
+
+        Returns:
+            tuple[int, int, int, int]: Mapped active BGRA color configuration
+                tuple.
+        """
         if CellType.FORTY_TWO in cell.cell_type:
             return self.ALL_COLORS.get_color(
                 ColorCell.WALL_42.value
@@ -101,6 +142,10 @@ class Drawer():
         return self.ALL_COLORS.get_color(ColorCell.FLOOR.value)
 
     def __draw_special_tiles(self) -> None:
+        """
+        Iterates over registered custom target positions and fills
+        their background tiles with custom palette structures.
+        """
         for x, y, cell in self.maze.special_cells:
             origin_x = x * self.CELL_SIZE
             origin_y = y * self.CELL_SIZE
@@ -112,6 +157,10 @@ class Drawer():
             )
 
     def __draw_maze(self) -> None:
+        """
+        Renders the entire 2D maze layout onto the application image buffer
+        canvas by generating floors and placing bounding wall line rectangles.
+        """
         canvas: FlatCanvas = self.mlx.flat_canvas
         default_floor = self.ALL_COLORS.get_color(ColorCell.FLOOR.value)
         canvas.fill_all(
@@ -160,6 +209,14 @@ class Drawer():
                     )
 
     def __menu(self, param: Mlx) -> None:
+        """
+        Displays text string commands in a bottom HUD window menu panel using
+        the MiniLibX text drawing subroutines.
+
+        Args:
+            param (Mlx): The native internal graphics pointer configuration
+                context.
+        """
         _ = param.mlx_ptr
         self.mlx.mlx_put_image_to_window(self.MARGIN, self.MAINMENU_WIDTH)
         self.mlx.mlx_do_sync()
@@ -176,6 +233,15 @@ class Drawer():
         self.mlx.mlx_do_sync()
 
     def __key_how(self, key: int, mlx_param: Mlx) -> None:
+        """
+        Processes key release hooks caught from the window manager backend,
+        driving color palette adjustments, validation reloads, and animation
+        rendering loops.
+
+        Args:
+            key (int): The integer value mapping to the keycode pressed.
+            mlx_param (Mlx): Root environment reference parameters.
+        """
         if key in (but.BUTTON_1.value,
                    but.BUTTON_2.value,
                    but.BUTTON_3.value,
@@ -271,6 +337,20 @@ class Drawer():
             exit: tuple[int, int],
             directions: str | list[str]
     ) -> set[tuple[int, int]]:
+        """
+        Parses directional string paths ('N','S','E','W') into an absolute set
+        of unique coordinate tuples visited along the maze layout grid.
+
+        Args:
+            enter (tuple[int, int]): Entry cell coordinates (x, y).
+            exit (tuple[int, int]): Exit cell coordinates (x, y).
+            directions (str | list[str]): A solution path string, or a list of
+                multiple paths.
+
+        Returns:
+            set[tuple[int, int]]: The parsed set of unique coordinate points
+                visited.
+        """
         path_coords = set()
         if isinstance(directions, list):
             for direction in directions:
@@ -297,6 +377,16 @@ class Drawer():
             long: set[tuple[int, int]],
             color: ColorCell
     ) -> None:
+        """
+        Draws centered squares inside target cells to visually highlight
+        solution pathways.
+
+        Args:
+            long (set[tuple[int, int]]): Collection of spatial grid coordinate
+                structures.
+            color (ColorCell): The categorical palette index to fill the inner
+                frames with.
+        """
         offset = int(self.CELL_SIZE * 0.15)
         inner_size = int(self.CELL_SIZE * 0.7)
         pixel_color = self.ALL_COLORS.get_color(color.value)
@@ -312,12 +402,33 @@ class Drawer():
             )
 
     def __drawway(self, long: set[tuple[int, int]]) -> None:
+        """
+        Fills targeted solution pathway cells using the active WAY palette.
+
+        Args:
+            long (set[tuple[int, int]]): Paths tracking coordinate tokens.
+        """
         self.__render_path_cells(long, ColorCell.WAY)
 
     def __undrawway(self, long: set[tuple[int, int]]) -> None:
+        """
+        Clears solution path markings from targeted cells by restoring
+        their background color to the active FLOOR palette.
+
+        Args:
+            long (set[tuple[int, int]]): Path coordinates to reset.
+        """
         self.__render_path_cells(long, ColorCell.FLOOR)
 
     def visualizer(self, mlx: MlxPy | None = None) -> None:
+        """
+        Allocates display surfaces, generates initial 2D configurations,
+        and launches the primary window event callback engine loop.
+
+        Args:
+            mlx (MlxPy | None, optional): An optional pre-initialized window
+                interface. Defaults to None.
+        """
         if not mlx:
             self.mlx = MlxPy()
         else:
@@ -346,6 +457,16 @@ class Drawer():
         self.mlx.close_window()
 
     def found_exit(self, player: Player) -> bool:
+        """
+        Verifies if the player's spatial coordinates match the
+        coordinates of an EXIT maze cell.
+
+        Args:
+            player (Player): Active user positional player object.
+
+        Returns:
+            bool: True if positioned exactly on an exit cell, otherwise False.
+        """
         pos = player.transform
         cell = player.map.get_cell(pos.x, pos.y)
         if isinstance(cell, Cell):
@@ -353,6 +474,21 @@ class Drawer():
         return False
 
     def __maze3D(self, player: Player, map: Raycaster, param: Mlx) -> int:
+        """
+        The continuous execution hook running behind the 3D projection view.
+        Handles key updates, updates player transforms, raycasts walls,
+        and mirrors positional statuses via the ASCII terminal layout.
+
+        Args:
+            player (Player): Active user movement player tracking instance.
+            map (Raycaster): Raycasting mathematical projection vector
+                compiler.
+            param (Mlx): Environment handling interface pointer context.
+
+        Returns:
+            int: Structural status completion sequence code
+                (0 for safe frames).
+        """
         teclas = self.mlx.key_pressed()
         pos = player.transform
         if (but.BUTTON_SCAPE.value in teclas or self.found_exit(player)):
@@ -368,6 +504,14 @@ class Drawer():
         return 0
 
     def visualizer_3d(self, player: Player, map: Raycaster) -> None:
+        """
+        Allocates the main display surfaces and handles context initialization
+        for the pseudo-3D Raycaster graphics execution loop.
+
+        Args:
+            player (Player): Active coordinate camera entity instance.
+            map (Raycaster): Vector alignment calculation engine.
+        """
         self.mlx = MlxPy()
         self.mlx.new_window(
             "3D",

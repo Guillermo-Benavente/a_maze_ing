@@ -28,8 +28,8 @@ def asignate(_: list[list[Any]]) -> bool:
 
 class Data(BaseModel):
 
-    WIDTH: int = Field(..., gt=0)
-    HEIGHT: int = Field(..., gt=0)
+    WIDTH: int = Field(..., gt=0, le=100)
+    HEIGHT: int = Field(..., gt=0, le=100)
     ENTRY: tuple[int, int]
     EXIT: tuple[int, int]
     OUTPUT_FILE: str = Field(..., min_length=5)
