@@ -1,4 +1,5 @@
 .venv/
+.mypy_cache/
 mazes_generated/
 __pycache__/
 libmlx.so
