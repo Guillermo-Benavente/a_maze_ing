@@ -5,6 +5,16 @@ from math import sqrt, tan, cos, pi
 
 
 def normalize_angle(angle: float) -> float:
+    """
+    Clamps a floating-point angle to fall strictly within the 0 to 2*pi radian
+    range.
+
+    Args:
+        angle (float): The unnormalized input angle in radians.
+
+    Returns:
+        float: The normalized angle inside the interval (0, 2*pi].
+    """
     angle = angle % (2 * pi)
     if angle <= 0:
         angle = (2 * pi) + angle
@@ -12,16 +22,54 @@ def normalize_angle(angle: float) -> float:
 
 
 def distance_between(x1: float, y1: float, x2: float, y2: float) -> float:
+    """
+    Calculates the Euclidean distance between two continuous 2D coordinate
+    positions.
+
+    Args:
+        x1 (float): Horizontal position of the origin point.
+        y1 (float): Vertical position of the origin point.
+        x2 (float): Horizontal position of the target point.
+        y2 (float): Vertical position of the target point.
+
+    Returns:
+        float: Linear spatial distance separating both coordinates.
+    """
     return sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
 @dataclass
 class RayOrientation:
+    """
+    Tracks and breaks down a vector's angular heading details.
+
+    Acts as a boolean quadrant registry used to determine line-intercept steps
+    and identify which grid cell faces are being approached.
+    """
     angle: float
+    """
+    The normalized vector trajectory angle expressed in radians.
+    """
+
     is_up: bool
+    """
+    True if the vector heads toward the upper/northern hemisphere of the map.
+    """
+
     is_down: bool
+    """
+    True if the vector heads toward the lower/southern hemisphere of the map.
+    """
+
     is_left: bool
+    """
+    True if the vector heads toward the left/western hemisphere of the map.
+    """
+
     is_right: bool
+    """
+    True if the vector heads toward the right/eastern hemisphere of the map.
+    """
 
     @classmethod
     def from_angle(cls, angle: float) -> 'RayOrientation':
@@ -35,13 +83,41 @@ class RayOrientation:
 
 @dataclass
 class RayHit:
+    """
+    Stores pinpoint metrics detailing a successful ray-to-obstacle collision
+    point.
+    """
     x: float = 0.0
+    """
+    Absolute horizontal coordinate where the intersection with a wall occurred.
+    """
+
     y: float = 0.0
+    """
+    Absolute vertical coordinate where the intersection with a wall occurred.
+    """
+
     distance: float = 0.0
+    """
+    Calculated length from the viewport camera to the intersection coordinate
+    point.
+    """
+
     side: str = ""
+    """
+    The specific structural wall face that was hit ('N', 'S', 'E', or 'W').
+    """
 
 
 class Ray:
+    """
+    Represents an isolated vector projected into a 2D layout to track walls.
+
+    Employs Digital Differential Analysis (DDA) principles by projecting
+    separate horizontal and vertical grid line cross-examinations, determining
+    the closest collision point, and modifying raw depth outputs to counter
+    fish-eye lens distortion.
+    """
     colors1: tuple[int, int, int, int]
     colors2: tuple[int, int, int, int]
     current_color: tuple[int, int, int, int]
@@ -58,6 +134,20 @@ class Ray:
         colors1: tuple[int, int, int, int],
         colors2: tuple[int, int, int, int]
     ) -> None:
+        """
+        Initializes a distinct projection ray pointing toward a specific
+        target angle.
+
+        Args:
+            angle (float): Target direction trajectory angle in radians.
+            player (Player): Active viewpoint camera tracking context source.
+            map (Map): Matrix layout structure wrapper containing cell
+                coordinates.
+            colors1 (tuple[int, int, int, int]): Default fallback color
+                profile.
+            colors2 (tuple[int, int, int, int]): Secondary color profile for
+                alternative shading.
+        """
         self.colors1 = colors1
         self.colors2 = colors2
         self.current_color = colors1
@@ -72,6 +162,20 @@ class Ray:
         map_width: int,
         map_height: int
     ) -> tuple[bool, float, float]:
+        """
+        Traces vector lines across horizontal grid rows to isolate cellular
+        obstructions.
+
+        Args:
+            cell_size (int): Size dimensions assigned to individual square
+                cells.
+            map_width (int): Absolute horizontal bounds of the canvas.
+            map_height (int): Absolute vertical bounds of the canvas.
+
+        Returns:
+            tuple[bool, float, float]: A status flag indicating if a wall was
+                hit, along with the resulting (x, y) coordinates.
+        """
         player_x: float = self.player.transform.x
         player_y: float = self.player.transform.y
         first_intercept_y: float = player_y
@@ -103,6 +207,20 @@ class Ray:
         map_width: int,
         map_height: int
     ) -> tuple[bool, float, float]:
+        """
+        Traces vector lines across vertical grid columns to isolate cellular
+        obstructions.
+
+        Args:
+            cell_size (int): Size dimensions assigned to individual square
+                cells.
+            map_width (int): Absolute horizontal bounds of the canvas.
+            map_height (int): Absolute vertical bounds of the canvas.
+
+        Returns:
+            tuple[bool, float, float]: A status flag indicating if a wall was
+                hit, along with the resulting (x, y) coordinates.
+        """
         player_x: float = self.player.transform.x
         player_y: float = self.player.transform.y
         first_intercept_x: float = player_x
@@ -136,6 +254,25 @@ class Ray:
         map_height: int,
         wall_direction: str
     ) -> tuple[bool, float, float]:
+        """
+        Advances the ray coordinates in fixed steps until a wall is encountered
+        or the search exceeds map bounds.
+
+        Args:
+            start_x (float): Initial horizontal starting pixel intersection.
+            start_y (float): Initial vertical starting pixel intersection.
+            step_x (float): Horizontal index increment value applied per step.
+            step_y (float): Vertical index increment value applied per step.
+            map_width (int): Absolute horizontal maximum width limit.
+            map_height (int): Absolute vertical maximum height limit.
+            wall_direction (str): The cardinal edge facing identifier to test
+                ('N', 'S', 'E', 'W').
+
+        Returns:
+            tuple[bool, float, float]: True along with the collision
+                coordinates if a wall is found, otherwise False with
+                (0.0, 0.0).
+        """
         cell_size: int = self.map.setings.CELS_SIZE
         while (
             (-cell_size <= start_x < map_width + cell_size)
@@ -148,6 +285,13 @@ class Ray:
         return False, 0.0, 0.0
 
     def cast(self) -> None:
+        """
+        Executes grid intersections along both axes and selects the closest
+        valid collision.
+
+        Applies a cosine correction based on the player's viewing angle to
+        eliminate fish-eye lens distortion before submitting the final values.
+        """
         MAX_DISTANCE: float = 999999.0
         cell_size: int = self.map.setings.CELS_SIZE
         map_width: int = self.map.setings.data.WIDTH * cell_size
