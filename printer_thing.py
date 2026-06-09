@@ -60,6 +60,7 @@ class Drawer():
         self.HEIGHT = maze.data.HEIGHT * self.CELL_SIZE
         self.show_path = True
         self.MENU = [
+            "P - Show/Hide path",
             "1 - Change all Colors",
             "2 - Change wall Colors",
             "3 - Change enter Colors",
@@ -69,9 +70,8 @@ class Drawer():
             "7 - Change 42 Colors",
             "8 - New",
             "9 - Animation",
+            "ESC - Exit",
             "0 - All ways",
-            "P - Show/Hide path",
-            "ESC - Exit"
             ]
         self.MAINMENU_HEIGHT = 20 + 20 * (len(self.MENU)//2 + 2)
         self.MAINMENU_WIDTH = 0
@@ -224,16 +224,32 @@ class Drawer():
         _ = param.mlx_ptr
         self.mlx.mlx_put_image_to_window(self.MARGIN, self.MAINMENU_WIDTH)
         self.mlx.mlx_do_sync()
-        for i in range(0, len(self.MENU), 2):
+        menu_len = len(self.MENU)
+        for i in range(0, menu_len, 2):
             y_pos = self.HEIGHT + 30 + (i // 2) * 20
-            self.mlx.mlx_string_put(30, y_pos, 0xFFFFFF, self.MENU[i])
+            is_last_element = (i == menu_len - 1)
+            if is_last_element:
+                if self.maze.data.ALLWAYS:
+                    self.mlx.mlx_string_put(30, y_pos, 0xFFFFFF, self.MENU[i])
+            else:
+                self.mlx.mlx_string_put(30, y_pos, 0xFFFFFF, self.MENU[i])
             if self.MENU[-1] != self.MENU[i]:
-                self.mlx.mlx_string_put(
-                    (self.WIDTH + self.MAINMENU_WIDTH) // 2,
-                    y_pos,
-                    0xFFFFFF,
-                    self.MENU[i + 1]
-                )
+                is_last_element = (i + 1 == menu_len - 1)
+                if is_last_element:
+                    if self.maze.data.ALLWAYS:
+                        self.mlx.mlx_string_put(
+                            (self.WIDTH + self.MAINMENU_WIDTH) // 2,
+                            y_pos,
+                            0xFFFFFF,
+                            self.MENU[i + 1]
+                        )
+                else:
+                    self.mlx.mlx_string_put(
+                        (self.WIDTH + self.MAINMENU_WIDTH) // 2,
+                        y_pos,
+                        0xFFFFFF,
+                        self.MENU[i + 1]
+                    )
         self.mlx.mlx_do_sync()
 
     def __key_how(self, key: int, mlx_param: Mlx) -> None:
@@ -326,16 +342,20 @@ class Drawer():
                     self.__undrawway(path_coords)
                     sleep(0.03125)
                 self.content = self.maze.solution
-            if key == but.BUTTON_0.value:
+            if key == but.BUTTON_0.value and self.maze.data.ALLWAYS:
                 deque(self.maze.algoritm["algoritm"](), maxlen=0)
                 all_ways: set[tuple[int, int]] = set()
-                for i in self.maze.algoritm["list"]():
-                    all_ways.update(self.__get_path_coords(
-                            self.maze.data.ENTRY,
-                            self.maze.data.EXIT,
-                            i
-                    ))
-                self.content = self.maze.algoritm["list"]()
+                self.show_all = not self.show_all
+                if self.show_all:
+                    for i in self.maze.algoritm["list"]():
+                        all_ways.update(self.__get_path_coords(
+                                self.maze.data.ENTRY,
+                                self.maze.data.EXIT,
+                                i
+                        ))
+                    self.content = self.maze.algoritm["list"]()
+                else:
+                    self.content = self.maze.solution
             self.__draw_maze()
             if self.show_path and self.content is not None:
                 self.__drawway(self.__get_path_coords(
@@ -462,7 +482,8 @@ class Drawer():
             self.MARGIN
         )
         self.content = self.maze.solution
-        self.show_path = True
+        self.show_path = False
+        self.show_all = False
         self.__draw_maze()
         if self.show_path and self.content is not None:
             self.__drawway(self.__get_path_coords(

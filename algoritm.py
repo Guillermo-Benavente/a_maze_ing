@@ -95,7 +95,7 @@ def operate2(num: Cell, thinks: list[tuple[str, int, int]],
     return order
 
 
-def found_all(enter: tuple[int, int], exits: tuple[int, int],
+def found_all(enter: tuple[int, int], exits: tuple[int, int], allways: bool,
               maps: list[list[Cell]]) -> dict[str, Callable[..., Any]]:
     """
     Solves the maze using a standard Depth-First Search (DFS) backtracker.
@@ -104,6 +104,10 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
     Args:
         enter (tuple[int, int]): The starting point coordinates (x, y).
         exits (tuple[int, int]): The destination exit coordinates (x, y).
+        allways (bool): If True, forces the traversal loop to continue
+            exploring alternative paths and loops to find all solutions after
+            hitting the exit. If False, stops the algorithm immediately upon
+            discovering the first valid path solution.
         maps (list[list[Cell]]): The entire 2D matrix structure of the maze.
 
     Returns:
@@ -142,6 +146,8 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
                 if x == exix and y == exiy:
                     texts.append(text)
                     stack.pop()
+                    if not allways:
+                        return
                     continue
                 if (x, y) in visited:
                     stack.pop()
@@ -188,7 +194,7 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int],
     return funtul
 
 
-def found_weight(enter: tuple[int, int], exits: tuple[int, int],
+def found_weight(enter: tuple[int, int], exits: tuple[int, int], allways: bool,
                  maps: list[list[Cell]]) -> dict[str, Callable[..., Any]]:
     """
     Solves the maze via an informed Depth-First Search strategy by prioritizing
@@ -236,6 +242,8 @@ def found_weight(enter: tuple[int, int], exits: tuple[int, int],
                 if x == exix and y == exiy:
                     texts.append(text)
                     stack.pop()
+                    if not allways:
+                        return
                     continue
                 if (x, y) in visited:
                     stack.pop()

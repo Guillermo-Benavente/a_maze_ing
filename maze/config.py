@@ -41,6 +41,8 @@ class MazeConfig:
             accepting a maze grid and returning a solver dictionary.
             When ``None`` and ``VISUAL3D`` is False, the solution
             path computation is skipped. Defaults to None.
+        ALLWAYS (bool): Internal evaluation flag forcing code generation
+            pipelines to continue. Defaults to True.
     """
     WIDTH: int
     HEIGHT: int
@@ -51,6 +53,7 @@ class MazeConfig:
     VISUAL3D: bool = False
     SEED: int = field(default_factory=lambda: randint(1, maxs))
     ALGORITM: Callable[..., Any] | None = None
+    ALLWAYS: bool = True
 
     def __post_init__(self) -> None:
         """

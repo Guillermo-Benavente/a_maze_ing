@@ -10,7 +10,7 @@ from maze.config import MazeConfig
 
 
 LIST = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT", "SEED",
-        "ALGORITM", "VISUAL3D"]
+        "ALGORITM", "VISUAL3D", "ALLWAYS"]
 
 
 def asignate(_: list[list[Any]]) -> bool:
@@ -37,9 +37,22 @@ class Data(BaseModel):
     PERFECT: bool
     VISUAL3D: bool
     SEED: int = Field(default_factory=lambda: randint(1, maxs))
-    ALGORITM: Callable[..., Any] = asignate
+    ALGORITM: Callable[..., Any] = Field(default=asignate)
+    ALLWAYS: bool = Field(default=True)
 
     def to_maze_config(self) -> MazeConfig:
+        """
+        Transforms the current configuration instance state into a structured
+        and validated MazeConfig data transfer object.
+
+        Extracts structural properties, execution rules, orientation flags,
+        and procedural generation properties to build a clean immutable
+        mapping snapshot.
+
+        Returns:
+            MazeConfig: A fresh configuration data record instance matching
+                        the active environment attributes.
+        """
         return MazeConfig(
             WIDTH=self.WIDTH,
             HEIGHT=self.HEIGHT,
@@ -50,6 +63,7 @@ class Data(BaseModel):
             VISUAL3D=self.VISUAL3D,
             SEED=self.SEED,
             ALGORITM=self.ALGORITM,
+            ALLWAYS=self.ALLWAYS
         )
 
     @model_validator(mode="before")
@@ -69,6 +83,11 @@ class Data(BaseModel):
         entry = (0, 0)
         exits = (0, 0)
         sol: dict[str, Any] = {}
+        if isinstance(data_3d.get("ALLWAYS"), str):
+            allWays = data_3d["ALLWAYS"].lower()
+            assert (allWays == "true"
+                    or allWays == "false"), "ALLWAYS is icorrect"
+            sol.update({"ALLWAYS": allWays == "true"})
         if isinstance(data_3d.get("WIDTH"), str):
             sol.update({"WIDTH": int(data_3d["WIDTH"])})
         if isinstance(data_3d.get("HEIGHT"), str):
@@ -95,9 +114,17 @@ class Data(BaseModel):
             algoritm = int(data_3d["ALGORITM"])
             assert algoritm == 1 or algoritm == 2, "ALGORITM not found"
             if algoritm == 1:
-                sol.update({"ALGORITM": partial(found_all, entry, exits)})
+                sol.update({"ALGORITM": partial(
+                    found_all,
+                    entry,
+                    exits,
+                    allWays == "true")})
             else:
-                sol.update({"ALGORITM": partial(found_weight, entry, exits)})
+                sol.update({"ALGORITM": partial(
+                    found_weight,
+                    entry,
+                    exits,
+                    allWays == "true")})
         if isinstance(data_3d.get("VISUAL3D"), str):
             value = data_3d["VISUAL3D"].lower()
             assert value == "true" or value == "false", "VISUAL3D is icorrect"
@@ -122,8 +149,12 @@ class Data(BaseModel):
         assert 0 <= y2 < self.HEIGHT, "EXIT: y fuera de rango"
         assert x2 != x or y2 != y, "EXIT: is the same that ENTRY"
         assert self.OUTPUT_FILE.endswith(".txt"), "OUTPUT_FILE isn't a txt"
-        if isinstance(self.ALGORITM([]), bool):
-            self.ALGORITM = partial(found_all, self.ENTRY, self.EXIT)
+        if isinstance(self.ALGORITM([[]]), bool):
+            self.ALGORITM = partial(
+                found_all,
+                self.ENTRY,
+                self.EXIT,
+                self.ALLWAYS)
         return self
 
 
