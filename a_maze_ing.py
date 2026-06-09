@@ -5,10 +5,7 @@ from maze.maze_generator import MazeGenerator
 from pydantic import ValidationError
 from printer_thing import Drawer
 from sys import argv
-from maze_3d.player import Player
-from maze_3d.map import Map
-from maze_3d.data_3d import Data_3D
-from maze_3d.raycaster import Raycaster
+from maze_3d import Player, Map, Data_3D, Raycaster
 from colors import ColorCell, AllColors
 
 

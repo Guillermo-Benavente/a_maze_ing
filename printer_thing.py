@@ -1,16 +1,13 @@
-from maze_3d.player import Player
 from sys import argv
-from maze_3d.raycaster import Raycaster
+from maze_3d import Raycaster, Player
 from functools import partial
 from time import sleep
 from collections import deque
 from mlx import Mlx  # type: ignore[import-untyped, unused-ignore]
 from mlx_py import MlxPy, FlatCanvas
-from maze.cell import Cell
-from maze.enums import CellType
 from colors import AllColors, ColorCell
 from parser_config import lector, Data
-from maze.maze_generator import MazeGenerator
+from maze import MazeGenerator, Cell, CellType
 import os
 from pydantic import ValidationError
 from buttons import Buttons as but

@@ -1,7 +1,7 @@
 from .data_3d import Data_3D
 from .map import Map
 from mlx_py import MlxPy
-from maze.cell import Cell
+from maze import Cell
 from dataclasses import dataclass
 from buttons import Buttons as btn
 from math import sin, cos, pi

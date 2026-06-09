@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mazegen"
+version = "1.0.0"
+description = "A-Maze-ing: Maze generation and visualization engine with multi-agent parallel mining algorithm"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Guillermo Benavente Mora", email = "gbenaven@student.42.fr"},
+    {name = "Airan Cana", email = "acanadil@student.42.fr"}
+]
+keywords = ["maze", "generation", "solving", "visualization", "raycasting", "3d"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "pydantic>=2.0",
+    "numpy>=1.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    "flake8>=4.0",
+    "mypy>=0.990",
+    "build>=0.10",
+    "twine>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Guillermo-Benavente/a_maze_ing"
+Repository = "https://github.com/Guillermo-Benavente/a_maze_ing.git"
+Documentation = "https://github.com/Guillermo-Benavente/a_maze_ing/blob/main/README.md"
+Issues = "https://github.com/Guillermo-Benavente/a_maze_ing/issues"
+
+[tool.setuptools]
+packages = ["maze", "maze_3d"]
+
+[tool.setuptools.package-data]
+maze = ["py.typed"]
+maze_3d = ["py.typed"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+exclude = [".venv"]
+
+[tool.flake8]
+max-line-length = 100
+exclude = [".venv", "__pycache__", ".mypy_cache"]

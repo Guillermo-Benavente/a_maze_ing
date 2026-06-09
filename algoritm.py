@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from typing import Any, Generator
-from maze.cell import Cell
+from maze import Cell
 from numpy import abs
 
 

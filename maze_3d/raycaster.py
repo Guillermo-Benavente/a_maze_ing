@@ -2,8 +2,7 @@ from .ray import Ray
 from .player import Player
 from .map import Map
 from mlx_py import MlxPy
-from maze.enums import CellType
-from maze.cell import Cell
+from maze import Cell, CellType
 
 
 class Raycaster:

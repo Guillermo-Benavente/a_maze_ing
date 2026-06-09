@@ -1,5 +1,5 @@
 from .data_3d import Data_3D
-from maze.cell import Cell
+from maze import Cell
 
 
 class Map():

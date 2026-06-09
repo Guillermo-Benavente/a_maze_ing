@@ -6,7 +6,7 @@ from collections.abc import Callable
 from algoritm import found_all, found_weight
 from functools import partial
 from sys import argv
-from maze.config import MazeConfig
+from maze import MazeConfig
 
 
 LIST = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT", "SEED",
