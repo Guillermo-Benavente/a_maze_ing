@@ -4,7 +4,7 @@ from maze_3d.raycaster import Raycaster
 from functools import partial
 from time import sleep
 from collections import deque
-from mlx import Mlx
+from mlx import Mlx  # type: ignore
 from mlx_py import MlxPy, FlatCanvas
 from maze.cell import Cell
 from maze.enums import CellType
@@ -59,6 +59,7 @@ class Drawer():
         self.WIDTH = maze.data.WIDTH * self.CELL_SIZE
         self.HEIGHT = maze.data.HEIGHT * self.CELL_SIZE
         self.show_path = True
+        self.show_all = True
         self.MENU = [
             "P - Show/Hide path",
             "1 - Change all Colors",
