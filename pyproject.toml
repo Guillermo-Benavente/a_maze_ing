@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "Guillermo Benavente Mora", email = "gbenaven@student.42.fr"},
+    {name = "Guillermo Benavente", email = "gbenaven@student.42.fr"},
     {name = "Airan Cana", email = "acanadil@student.42.fr"}
 ]
 keywords = ["maze", "generation", "solving", "visualization", "raycasting", "3d"]
@@ -45,7 +45,7 @@ Documentation = "https://github.com/Guillermo-Benavente/a_maze_ing/blob/main/REA
 Issues = "https://github.com/Guillermo-Benavente/a_maze_ing/issues"
 
 [tool.setuptools]
-packages = ["maze", "maze_3d"]
+packages = ["maze"]
 
 [tool.setuptools.package-data]
 maze = ["py.typed"]
