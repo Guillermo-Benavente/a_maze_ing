@@ -1,5 +1,5 @@
 from typing import Any, Set
-from mlx import Mlx  # type: ignore
+from mlx import Mlx  # type: ignore[import-untyped, unused-ignore]
 
 
 class FlatCanvas:
