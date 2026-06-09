@@ -86,7 +86,7 @@ class Data(BaseModel):
         if isinstance(data_3d.get("ALLWAYS"), str):
             allWays = data_3d["ALLWAYS"].lower()
             assert (allWays == "true"
-                    or allWays == "false"), "ALLWAYS is icorrect"
+                    or allWays == "false"), "ALLWAYS is incorrect"
             sol.update({"ALLWAYS": allWays == "true"})
         if isinstance(data_3d.get("WIDTH"), str):
             sol.update({"WIDTH": int(data_3d["WIDTH"])})
@@ -108,7 +108,7 @@ class Data(BaseModel):
             sol.update({"OUTPUT_FILE": data_3d["OUTPUT_FILE"]})
         if isinstance(data_3d.get("PERFECT"), str):
             value = data_3d["PERFECT"].lower()
-            assert value == "true" or value == "false", "PERFECT is icorrect"
+            assert value == "true" or value == "false", "PERFECT is incorrect"
             sol.update({"PERFECT": value == "true"})
         if isinstance(data_3d.get("ALGORITM"), str):
             algoritm = int(data_3d["ALGORITM"])
@@ -127,7 +127,7 @@ class Data(BaseModel):
                     allWays == "true")})
         if isinstance(data_3d.get("VISUAL3D"), str):
             value = data_3d["VISUAL3D"].lower()
-            assert value == "true" or value == "false", "VISUAL3D is icorrect"
+            assert value == "true" or value == "false", "VISUAL3D is incorrect"
             sol.update({"VISUAL3D": value == "true"})
         return sol
 
@@ -142,11 +142,11 @@ class Data(BaseModel):
                 configuration details.
         """
         x, y = self.ENTRY
-        assert 0 <= x < self.WIDTH, "ENTRY: x fuera de rango"
-        assert 0 <= y < self.HEIGHT, "ENTRY: y fuera de rango"
+        assert 0 <= x < self.WIDTH, "ENTRY: x out of range"
+        assert 0 <= y < self.HEIGHT, "ENTRY: y out of range"
         x2, y2 = self.EXIT
-        assert 0 <= x2 < self.WIDTH, "EXIT: x fuera de rango"
-        assert 0 <= y2 < self.HEIGHT, "EXIT: y fuera de rango"
+        assert 0 <= x2 < self.WIDTH, "EXIT: x out of range"
+        assert 0 <= y2 < self.HEIGHT, "EXIT: y out of range"
         assert x2 != x or y2 != y, "EXIT: is the same that ENTRY"
         assert self.OUTPUT_FILE.endswith(".txt"), "OUTPUT_FILE isn't a txt"
         if isinstance(self.ALGORITM([[]]), bool):

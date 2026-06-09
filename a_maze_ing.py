@@ -89,8 +89,8 @@ def __printmaze(data: Data | None, maze: MazeGenerator) -> None:
             maze = MazeGenerator(data.to_maze_config())
     end_time: float = perf_counter()
     total_time: float = end_time - start_time
-    print("\n¡Proceso completado!")
-    print(f"Tiempo total: {total_time:.4f} segundos")
+    print("\nProcess completed!")
+    print(f"Total time: {total_time:.4f} seconds")
 
 
 if __name__ == "__main__":

@@ -9,10 +9,10 @@ PIP           := $(shell pwd)/$(VENV)/bin/pip
 install:
 	@echo "Setting up virtual environment..."
 	@python3 -m venv $(VENV)
-	@$(PYTHON) --version
+	@echo "Install dependencies..."
 	@$(PIP) install --upgrade pip > /dev/null 2>&1
 	@$(PIP) install pydantic numpy flake8 mypy > /dev/null 2>&1
-	$(PIP) install mlx-2.2-py3-none-any.whl 2>&1
+	@$(PIP) install mlx-2.2-py3-none-any.whl > /dev/null 2>&1
 	@echo "Done."
 
 run:
