@@ -1,5 +1,3 @@
-from collections.abc import Callable
-from typing import Any
 from random import choice, seed, randint, sample
 from .maze_generator import MazeGenerator
 from .cell import Cell
@@ -9,11 +7,13 @@ from .enums import CellType, LimitWallType
 class MinerCell:
     """
     A minimal tracking wrapper that binds a grid Cell
-    instance to an active/dead lifecycle state flag.
+    instance to an active/dead lifecycle state flag
+    and marks cells currently engaged in border combat.
     """
     cell: Cell
     is_dead: bool
-    __slots__ = ('cell', 'is_dead')
+    in_battle: bool
+    __slots__ = ('cell', 'is_dead', 'in_battle')
 
     def __init__(self, cell: Cell) -> None:
         """
@@ -25,6 +25,7 @@ class MinerCell:
         """
         self.cell = cell
         self.is_dead = False
+        self.in_battle = False
 
 
 class MazeMiner():
@@ -33,6 +34,9 @@ class MazeMiner():
     to carve out valid paths inside the grid configuration.
     """
     maze_generator: MazeGenerator
+    second_path_ensured: bool
+    battle_space: set[tuple[tuple[int, int], tuple[int, int]]]
+    battle_strikes: dict[tuple[tuple[int, int], tuple[int, int]], int]
     DIRECTIONS: list[tuple[LimitWallType, int, int, LimitWallType]] = [
         (LimitWallType.NORTH, -1,  0, LimitWallType.SOUTH),
         (LimitWallType.EAST, 0,  1, LimitWallType.WEST),
@@ -51,90 +55,102 @@ class MazeMiner():
         """
         self.maze_generator = maze
         seed(maze.data.SEED)
-        self._mined()
+        self._mine()
 
-    def _mined(self) -> None:
+    def _mine(self) -> None:
         """
-        Executes the core algorithm loop, deploys path carvers,
-        and processes random wall breakdowns for imperfect settings.
+        Executes the core mining loop: spawns miners at starting cells,
+        runs iterative expansion cycles where each miner tries to carve
+        a path into a neighboring cell, and then processes dead-end
+        breaking and entry/exit neighbor cleanup for imperfect mazes.
         """
-        required_direction: LimitWallType | None = None
-
-        def imperfect_rule(
-                new_cell: Cell,
-                limit: LimitWallType,
-                current_cell: Cell
-        ) -> bool:
-            """
-            Evaluates validation constraints during imperfect
-            cell structural modifications.
-            """
-            if CellType.FORTY_TWO in new_cell.cell_type:
-                return False
-            if required_direction is not None:
-                return limit == required_direction
-            return bool(getattr(current_cell.walls, limit.name.lower()))
+        miners: int
         self.mined_cells: list[list[MinerCell]] = []
         width: int = self.maze_generator.data.WIDTH
         height: int = self.maze_generator.data.HEIGHT
-        self.miner_map: list[list[int | None]] = [[None for _ in range(width)]
-                                                  for _ in range(height)]
-        miners = int((width * height) * 0.04) or 1
+        if not self.maze_generator.data.PERFECT \
+                and (width == 1 or height == 1):
+            raise ValueError("Maze too small for imperfect mode")
+        self.miner_map: list[list[int | None]] = [
+            [None for _ in range(width)]
+            for _ in range(height)
+        ]
+        self.second_path_ensured = False
+        self.battle_space = set()
+        self.battle_strikes = {}
+        self.battle_blocked: set[tuple[int, int]] = set()
+        self.is_small_maze: bool = width * height <= 4
+        if not self.maze_generator.data.PERFECT:
+            miners = max(2, int((width * height) * 0.04))
+        else:
+            miners = int((width * height) * 0.04) or 1
         self.families: list[int] = list(range(miners))
-        self._inital_points(miners)
-        while self._has_cells_alive():
-            self._maze_mining(miners)
+        self._init_miners(miners)
+        while self._has_alive():
+            self._mine_step(miners)
         if not self.maze_generator.data.PERFECT:
             all_dead_ends = self._get_dead_ends()
-            imperfection_rate = 0.4
-            num_to_break = int(len(all_dead_ends) * imperfection_rate)
-            chosen_dead_ends = sample(all_dead_ends, num_to_break)
-            for dead_end_cell in chosen_dead_ends:
-                current_open_wall = next(
-                    wall_type for wall_type in LimitWallType
-                    if not getattr(dead_end_cell.walls, wall_type.name.lower())
-                )
+            open_rate: float = 0.4
+            target_count: int = int(len(all_dead_ends) * open_rate)
+            selected: list[Cell] = sample(all_dead_ends, target_count)
+            for dead_end_cell in selected:
+                try:
+                    open_wall: LimitWallType = next(
+                        wall_type for wall_type in LimitWallType
+                        if not getattr(
+                            dead_end_cell.walls, wall_type.name.lower()
+                        )
+                    )
+                except StopIteration:
+                    continue
                 [
                     wall_to_break,
                     y_offset,
                     x_offset,
-                    opposite_adjacent_wall
+                    opposite_wall
                 ] = next(
-                    direction_data for direction_data in self.DIRECTIONS
-                    if direction_data[3] == current_open_wall
+                    direction for direction in self.DIRECTIONS
+                    if direction[3] == open_wall
                 )
                 if wall_to_break not in dead_end_cell.limit_wall_type:
-                    current_x, current_y = dead_end_cell.position
-                    target_y = current_y + y_offset
-                    target_x = current_x + x_offset
+                    cell_x, cell_y = dead_end_cell.position
+                    target_y = cell_y + y_offset
+                    target_x = cell_x + x_offset
                     if 0 <= target_y < height and 0 <= target_x < width:
-                        adjacent_cell = (
+                        adjacent = (
                             self.maze_generator.maze[target_y][target_x]
                         )
-                        if CellType.FORTY_TWO not in adjacent_cell.cell_type:
+                        if CellType.FORTY_TWO not in adjacent.cell_type \
+                           and (self.is_small_maze
+                                or ((cell_y, cell_x)
+                                    not in self.battle_blocked
+                                    and (target_y, target_x)
+                                    not in self.battle_blocked)):
                             setattr(
                                 dead_end_cell.walls,
                                 wall_to_break.name.lower(),
                                 False
                             )
                             setattr(
-                                adjacent_cell.walls,
-                                opposite_adjacent_wall.name.lower(),
+                                adjacent.walls,
+                                opposite_wall.name.lower(),
                                 False
                             )
                             dead_end_cell.encode_walls()
-                            adjacent_cell.encode_walls()
+                            adjacent.encode_walls()
+            if width == 2 or height == 2:
+                self._clear_entry_exit_neighbors()
+        del self.battle_blocked
         del self.families
         del self.mined_cells
         del self.miner_map
 
     def _get_dead_ends(self) -> list[Cell]:
         """
-        Scans the inner segments of the layout to aggregate and
-        return a listing of cells wrapped by three active walls.
-
-        Returns:
-            list[Cell]: Collection of dead-end cell references.
+        Scans the maze grid and returns all cells that have
+        exactly three closed walls out of four. These are dead
+        ends that can be broken open in imperfect mode to
+        create additional paths and cycles.
         """
         dead_ends: list[Cell] = []
         for row in self.maze_generator.maze:
@@ -153,10 +169,58 @@ class MazeMiner():
                     dead_ends.append(cell)
         return dead_ends
 
-    def _has_cells_alive(self) -> bool:
+    def _clear_entry_exit_neighbors(self) -> None:
         """
-        Evaluates tracking registries to confirm if any
-        miner agent path remains unblocked and active.
+        For 2-row or 2-column mazes, finds every cell adjacent
+        to the entry and exit cells and opens all of their walls,
+        ensuring entry and exit have multiple connections and
+        the maze is truly imperfect.
+        """
+        maze: list[list[Cell]] = self.maze_generator.maze
+        entry: Cell | None = None
+        exit_: Cell | None = None
+        for row in maze:
+            for cell in row:
+                if CellType.ENTRY in cell.cell_type:
+                    entry = cell
+                if CellType.EXIT in cell.cell_type:
+                    exit_ = cell
+        for focus in (entry, exit_):
+            if focus is None:
+                continue
+            focus_col, focus_row = focus.position
+            for _limit, _row_off, _col_off, _ in self.DIRECTIONS:
+                if _limit in focus.limit_wall_type:
+                    continue
+                neighbor_row = focus_row + _row_off
+                neighbor_col = focus_col + _col_off
+                if not (0 <= neighbor_row < len(maze)
+                        and 0 <= neighbor_col < len(maze[0])):
+                    continue
+                adjacent: Cell = maze[neighbor_row][neighbor_col]
+                if CellType.FORTY_TWO in adjacent.cell_type:
+                    continue
+                adj_col, adj_row = adjacent.position
+                for limit, row_off, col_off, opposite in self.DIRECTIONS:
+                    if limit in adjacent.limit_wall_type:
+                        continue
+                    n_row = adj_row + row_off
+                    n_col = adj_col + col_off
+                    if not (0 <= n_row < len(maze)
+                            and 0 <= n_col < len(maze[0])):
+                        continue
+                    neighbor: Cell = maze[n_row][n_col]
+                    if CellType.FORTY_TWO in neighbor.cell_type:
+                        continue
+                    setattr(adjacent.walls, limit.name.lower(), False)
+                    setattr(neighbor.walls, opposite.name.lower(), False)
+                    adjacent.encode_walls()
+                    neighbor.encode_walls()
+
+    def _has_alive(self) -> bool:
+        """
+        Checks whether any miner agent in the tracking registry
+        is still alive and able to expand further.
 
         Returns:
             bool: True if at least one tracked miner cell
@@ -168,13 +232,15 @@ class MazeMiner():
                     return True
         return False
 
-    def _inital_points(self, miners: int) -> None:
+    def _init_miners(self, miners: int) -> None:
         """
-        Distributes random coordinates to serve as unique
-        initial spawning nodes for deployed miner families.
+        Distributes the initial miner agents across the grid.
+        In perfect mode all start positions are fully random.
+        In imperfect mode miners 0 and 1 are fixed at the Entry
+        and Exit cells to guarantee a dual-path structure.
 
         Args:
-            miners (int): Total number of agents/miner slots to spawn.
+            miners (int): Total number of miner agents to spawn.
         """
         valid_cells: list[Cell] = [
             cell
@@ -182,72 +248,81 @@ class MazeMiner():
             for cell in row
             if CellType.FORTY_TWO not in cell.cell_type
         ]
-        initial_cells: list[Cell] = sample(valid_cells, miners)
+
+        if self.maze_generator.data.PERFECT:
+            initial_cells = sample(valid_cells, miners)
+        else:
+            entry_cell: Cell = next(
+                cell for cell in valid_cells
+                if CellType.ENTRY in cell.cell_type
+            )
+            exit_cell: Cell = next(
+                cell for cell in valid_cells
+                if CellType.EXIT in cell.cell_type
+            )
+            remaining: list[Cell] = [
+                cell for cell in valid_cells
+                if cell is not entry_cell and cell is not exit_cell
+            ]
+            initial_cells = [entry_cell, exit_cell]
+            if miners > 2:
+                initial_cells.extend(sample(remaining, miners - 2))
+
         for miner, position_miner in enumerate(initial_cells):
             position_miner.zone_id = miner
             self.mined_cells.append([MinerCell(position_miner)])
             x, y = position_miner.position
             self.miner_map[y][x] = miner
 
-    def _maze_mining(self, miners: int) -> None:
+    def _mine_step(self, miners: int) -> None:
         """
-        Iterates over miner references to randomly assign
-        a proportional volume of execution expansions per batch cycle.
+        Runs one iteration of mining: for each miner, picks a random
+        number of living cells in its family and tries to expand each
+        one into an unclaimed neighbor.
 
         Args:
-            miners (int): Total number of existing miner agents.
+            miners (int): Total number of miner agents.
         """
-        def perfect_rule(new_cell: Cell, *_: Any) -> bool:
-            """
-            Enforces disjoint-set checking for a flawless,
-            non-looping maze rule.
-
-            Args:
-                new_cell (Cell): The candidate cell for
-                    mining expansion.
-
-            Returns:
-                    bool: True if the cell can be mined into,
-                        False if it would
-            """
-            return self._try_cell_fusion(new_cell, miner)
         maze: list[list[Cell]] = self.maze_generator.maze
         for miner in range(miners):
             if not self.mined_cells[miner]:
                 continue
-            num_mined: int = randint(1, len(self.mined_cells[miner]))
+            living: list[MinerCell] = [
+                wrapper for wrapper in self.mined_cells[miner]
+                if not wrapper.is_dead
+            ]
+            if not living:
+                continue
+            num_mined: int = randint(1, len(living))
             for _ in range(num_mined):
-                cell_mined: MinerCell = choice(self.mined_cells[miner])
-                if cell_mined.is_dead:
+                worker: MinerCell = choice(living)
+                if worker.is_dead:
                     continue
-                if not self._mined_cell(maze, cell_mined, perfect_rule):
-                    cell_mined.is_dead = True
+                if not self._carve_cell(maze, worker, miner):
+                    if not worker.in_battle:
+                        worker.is_dead = True
+                    worker.in_battle = False
 
-    def _mined_cell(
-        self,
-        maze: list[list[Cell]],
-        cell_mined: MinerCell,
-        can_mine_condition: Callable[[Cell, LimitWallType, Cell], bool]
+    def _carve_cell(
+            self,
+            maze: list[list[Cell]],
+            worker: MinerCell,
+            miner: int,
     ) -> bool:
         """
-        Shuffles and scans local directions to try to dig into
-        a neighboring block, turning off intersecting walls on success.
+        From a given miner cell, tries to carve into a random
+        neighbor by removing the shared wall. Returns True if
+        a wall was successfully broken, False otherwise.
 
         Args:
-            maze (list[list[Cell]]): Reference matrix representing
-                the full maze grid.
-            cell_mined (MinerCell): The miner cell object targeting
-                nearby spaces.
-            can_mine_condition (Callable): Criteria checking routine
-                defining path validity.
+            maze (list[list[Cell]]): The full maze grid.
+            worker (MinerCell): The miner cell to expand from.
+            miner (int): The miner family identifier.
 
         Returns:
-            bool: True if a neighboring cell wall was successfully mined,
-                False otherwise.
+            bool: True if a wall was broken, False otherwise.
         """
-        x: int
-        y: int
-        x, y = cell_mined.cell.position
+        x, y = worker.cell.position
         start_dir: int = randint(0, 3)
         step: int = 1 if randint(0, 1) == 0 else -1
         mined_successfully: bool = False
@@ -255,15 +330,21 @@ class MazeMiner():
             current_dir_index = (start_dir + (i * step)) % 4
             [
                 limit,
-                dy, dx,
+                row_off, col_off,
                 opposite_limit
             ] = self.DIRECTIONS[current_dir_index]
-
-            if limit not in cell_mined.cell.limit_wall_type:
-                new_cell: Cell = maze[y + dy][x + dx]
-                if can_mine_condition(new_cell, limit, cell_mined.cell):
+            if limit not in worker.cell.limit_wall_type:
+                neighbor_row: int = y + row_off
+                neighbor_col: int = x + col_off
+                if not (0 <= neighbor_row < len(maze)
+                        and 0 <= neighbor_col < len(maze[0])):
+                    continue
+                new_cell: Cell = maze[neighbor_row][neighbor_col]
+                if not getattr(worker.cell.walls, limit.name.lower()):
+                    continue
+                if self._try_fusion(worker, new_cell, miner):
                     setattr(
-                        cell_mined.cell.walls,
+                        worker.cell.walls,
                         limit.name.lower(),
                         False
                     )
@@ -272,24 +353,32 @@ class MazeMiner():
                         opposite_limit.name.lower(),
                         False
                     )
-                    cell_mined.cell.encode_walls()
+                    worker.cell.encode_walls()
                     new_cell.encode_walls()
                     mined_successfully = True
                     break
         return mined_successfully
 
-    def _try_cell_fusion(self, adjacent_cell: Cell, miner: int) -> bool:
+    def _try_fusion(
+            self,
+            miner_cell: MinerCell,
+            adjacent_cell: Cell,
+            miner: int
+    ) -> bool:
         """
-        Claims an untracked node into a specific miner field
-        or merges distinct disjoint sets if their paths cross.
+        Attempts to absorb an unclaimed cell into the miner's
+        family, or if the target cell belongs to a rival miner,
+        initiates a battle to decide whether the wall stays or
+        breaks open (imperfect mode) or merges the two families
+        (perfect mode).
 
         Args:
-            adjacent_cell (Cell): Neighboring cell to absorb or merge with.
-            miner (int): Active tracking identifier of the miner agent.
+            miner_cell (MinerCell): The cell initiating the dig.
+            adjacent_cell (Cell): The target neighboring cell.
+            miner (int): The miner family identifier.
 
         Returns:
-            bool: True if cell was newly mapped or merged safely,
-                False if blocked or linked.
+            bool: True if the wall was broken, False otherwise.
         """
         if CellType.FORTY_TWO in adjacent_cell.cell_type:
             return False
@@ -299,34 +388,96 @@ class MazeMiner():
             adjacent_cell.zone_id = miner
             self.mined_cells[miner].append(MinerCell(adjacent_cell))
             return True
-        else:
-            leader_a = self._get_leader(miner)
-            leader_b = self._get_leader(self.miner_map[y][x])
-            if leader_a is None or leader_b is None:
+        rival = self.miner_map[y][x]
+        if rival == miner:
+            return False
+        leader_a = self._get_leader(miner)
+        leader_b = self._get_leader(rival)
+        if leader_a is None or leader_b is None:
+            return False
+        if leader_a != leader_b:
+            if not self._battle_engagement(miner_cell, adjacent_cell):
                 return False
-            elif leader_a != leader_b:
-                self.families[leader_b] = leader_a
+            if not self.maze_generator.data.PERFECT:
                 return True
+            self.families[leader_b] = leader_a
+            return True
         return False
+
+    def _battle_engagement(
+            self,
+            miner_cell: MinerCell,
+            adjacent_cell: Cell
+    ) -> bool:
+        """
+        Manages the battle system between two rival miners
+        contesting the same wall. After 10 strikes the wall
+        is forced open. In imperfect mode the families stay
+        separate (creating a loop). In perfect mode they merge.
+        Also places a battle-blocked zone around the initiator
+        to prevent adjacent battles from creating large rooms.
+        """
+        width: int = self.maze_generator.data.WIDTH
+        height: int = self.maze_generator.data.HEIGHT
+        wall_key: tuple[tuple[int, int], tuple[int, int]] = (
+            min(miner_cell.cell.position, adjacent_cell.position),
+            max(miner_cell.cell.position, adjacent_cell.position)
+        )
+        if wall_key in self.battle_space:
+            hits = self.battle_strikes
+            hits[wall_key] = hits.get(wall_key, 0) + 1
+            miner_cell.in_battle = True
+            if hits[wall_key] >= 10:
+                self.battle_space.discard(wall_key)
+                del hits[wall_key]
+                return True
+            return False
+        if not self.maze_generator.data.PERFECT:
+            if not self.is_small_maze:
+                cell_col, cell_row = miner_cell.cell.position
+                if (cell_row, cell_col) in self.battle_blocked:
+                    return False
+                neighbor_offsets: list[tuple[int, int]]
+                if width <= 3 and height <= 3:
+                    neighbor_offsets = [
+                        (-1, 0), (1, 0), (0, -1), (0, 1)
+                    ]
+                else:
+                    neighbor_offsets = [
+                        (-1, -1), (-1, 0), (-1, 1),
+                        (0, -1), (0, 1),
+                        (1, -1), (1, 0), (1, 1)
+                    ]
+                for row_off, col_off in neighbor_offsets:
+                    n_row, n_col = cell_row + row_off, cell_col + col_off
+                    if 0 <= n_row < height and 0 <= n_col < width:
+                        self.battle_blocked.add((n_row, n_col))
+            self.battle_space.add(wall_key)
+            self.battle_strikes[wall_key] = 1
+            miner_cell.in_battle = True
+            return False
+        self.battle_space.add(wall_key)
+        return True
 
     def _get_leader(self, m_id: int | None) -> int | None:
         """
-        Triggers a recursive path-compression lookup
-        (Union-Find structure)to track down the absolute root zone ID.
+        Recursive union-find path compression lookup.
+        Traverses the families array to find the absolute
+        root zone identifier for a given miner.
 
         Args:
-            m_id (int | None): The specific miner set identifier to examine.
+            m_id (int | None): The miner identifier to look up.
 
         Returns:
-            int | None: The master root zone ID, or None if input matches None.
+            int | None: The root zone ID, or None for a
+                None input.
         """
         if m_id is None:
             return None
         if self.families[m_id] == m_id:
             return m_id
-        leader = self._get_leader(self.families[m_id])
+        leader: int | None = self._get_leader(self.families[m_id])
         if leader is None:
             return None
-
         self.families[m_id] = leader
         return self.families[m_id]
