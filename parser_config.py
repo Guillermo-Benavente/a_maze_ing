@@ -149,6 +149,11 @@ class Data(BaseModel):
         assert 0 <= y2 < self.HEIGHT, "EXIT: y out of range"
         assert x2 != x or y2 != y, "EXIT: is the same that ENTRY"
         assert self.OUTPUT_FILE.endswith(".txt"), "OUTPUT_FILE isn't a txt"
+        if self.WIDTH >= 9 and self.HEIGHT >= 9:
+            assert (
+                (x != (x2 + 1) and x != (x2 - 1) and x != x2) or
+                (y != (y2 + 1) and y != (y2 - 1) and y != y2)
+            ), "ENTRY and EXIT are very close"
         if isinstance(self.ALGORITM([[]]), bool):
             self.ALGORITM = partial(
                 found_all,
