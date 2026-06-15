@@ -162,8 +162,8 @@ def found_all(enter: tuple[int, int], exits: tuple[int, int], allways: bool,
             nx, ny = x + xx, y + yy
             if (nx, ny) not in visited:
                 num_sig = maps[ny][nx]
-                vecinos_sig = operate(num_sig, dirs, [])
-                stack.append((text + te, nx, ny, vecinos_sig, 0))
+                neighbor_sig = operate(num_sig, dirs, [])
+                stack.append((text + te, nx, ny, neighbor_sig, 0))
 
     def sorter() -> str:
         """

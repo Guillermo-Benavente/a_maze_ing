@@ -325,7 +325,7 @@ class Drawer():
                 except Exception as e:
                     print(e)
                 return
-            if key == but.BUTTON_9.value:
+            if key == but.BUTTON_9.value and self.show_path:
                 self.__draw_maze()
                 for algorithm_step in self.maze.algoritm["algoritm"]():
                     self.content = algorithm_step

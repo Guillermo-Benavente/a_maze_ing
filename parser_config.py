@@ -35,7 +35,7 @@ class Data(BaseModel):
     EXIT: tuple[int, int]
     OUTPUT_FILE: str = Field(..., min_length=5)
     PERFECT: bool
-    VISUAL3D: bool
+    VISUAL3D: bool = Field(default=False)
     SEED: int = Field(default_factory=lambda: randint(1, maxs))
     ALGORITM: Callable[..., Any] = Field(default=asignate)
     ALLWAYS: bool = Field(default=True)
