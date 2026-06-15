@@ -150,14 +150,14 @@ EESSEESSS...     (solution path: N=North, E=East, S=South, W=West)
 
 The generated maze satisfies these constraints:
 
-✓ **Valid Coordinates**: Entry and exit exist, are different, and within grid bounds  
-✓ **Full Connectivity**: All cells reachable from entry (no isolated regions except the "42" pattern)  
-✓ **Boundary Walls**: External borders are fully walled  
-✓ **Wall Coherence**: When cell A has an open wall to cell B, cell B must have an open wall back to cell A (bidirectional symmetry)  
-✓ **Width Constraint**: Corridors and open areas cannot exceed 2 cells width (no large 3x3+ open spaces)  
-✓ **"42" Pattern**: A visible 3x3 or 2x4 pattern of fully closed cells displaying the number "42" (omitted if maze too small)  
-✓ **Perfect Maze Property** (if PERFECT=True): Exactly one valid solution path from entry to exit  
-✓ **Solution Path**: Valid pathfinding from entry to exit with no dead ends in solution
+- **Valid Coordinates**: Entry and exit exist, are different, and within grid bounds  
+- **Full Connectivity**: All cells reachable from entry (no isolated regions except the "42" pattern)  
+- **Boundary Walls**: External borders are fully walled  
+- **Wall Coherence**: When cell A has an open wall to cell B, cell B must have an open wall back to cell A (bidirectional symmetry)  
+- **Width Constraint**: Corridors and open areas cannot exceed 2 cells width (no large 3x3+ open spaces)  
+- **"42" Pattern**: A visible 3x3 or 2x4 pattern of fully closed cells displaying the number "42" (omitted if maze too small)  
+- **Perfect Maze Property** (if PERFECT=True): Exactly one valid solution path from entry to exit  
+- **Solution Path**: Valid pathfinding from entry to exit with no dead ends in solution
 
 ### Error Handling
 
@@ -513,7 +513,7 @@ The `mazegen-1.0.0` distribution includes:
 | **Git** | Version control with feature branching | 2.0+ |
 | **Make** | Build and automation orchestration | - |
 
-## Mandatory Features ✓
+## Mandatory Features
 
 - **Maze Generation**: Multi-agent parallel recursive backtracker with full configurability
 - **Perfect Mazes**: Single-solution guaranteed pathfinding with mathematical spanning tree property
@@ -528,15 +528,6 @@ The `mazegen-1.0.0` distribution includes:
 
 ## Advanced Features (BONUS)
 
-### Multiple Maze Generation Algorithms
-- **Perfect Maze Generation**: Multi-agent parallel recursive backtracker with guaranteed single solution
-- **Imperfect Maze Support**: Same generator with optional loop injection (40% dead-end wall breaking) for complexity variation
-
-### Multiple Solving Algorithms
-Two distinct pathfinding strategies included:
-- **Standard DFS**: Explores paths sequentially without heuristic bias, guarantees finding all solutions
-- **Manhattan Heuristic DFS**: Prioritizes moves reducing Manhattan distance to exit, typically finds solutions 30-50% faster
-
 ### 3D Raycasting Visualization Engine
 Full pseudo-3D first-person exploration with:
 - Real-time raycasting for column-based rendering
@@ -544,10 +535,6 @@ Full pseudo-3D first-person exploration with:
 - Player movement with collision detection and smooth camera
 - Seamless integration with existing 2D maze data
 - Configurable via `VISUAL3D` flag
-
-### Perfect & Imperfect Maze Variants
-- **Perfect Mazes** (default): Guaranteed single solution, no loops, mathematical spanning tree property
-- **Imperfect Mazes**: Multiple solutions with configurable loop density (40% dead-end wall breaking)
 
 ### Real-Time Configuration Reloading
 2D visualizer watches configuration file and automatically regenerates maze on changes without restart, enabling rapid iteration
