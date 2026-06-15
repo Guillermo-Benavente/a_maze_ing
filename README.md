@@ -240,6 +240,253 @@ The project implements a **multi-agent parallel maze mining algorithm** where mu
 - **Output File Writing**: O(WIDTH × HEIGHT)
 - **Space Complexity**: O(WIDTH × HEIGHT) for grid storage
 
+## Maze Generator - Reusable Module
+
+This is the core reusable module of the **A-Maze-ing** project. It provides a high-performance, type-safe maze generation engine that can be imported and used in other Python projects via pip installation.
+
+### Module Installation
+
+#### From Local Distribution
+
+```bash
+# Using the wheel (pre-built binary)
+pip install ./mazegen-1.0.0-py3-none-any.whl
+
+# Using the source archive
+pip install ./mazegen-1.0.0.tar.gz
+
+# Development installation (editable)
+pip install -e .
+```
+
+#### Requirements
+
+- Python 3.10 or later
+- Dependencies (automatically installed):
+  - `pydantic>=2.0` - Configuration validation
+  - `numpy>=1.20` - Numerical operations
+
+### Quick Start
+
+#### Basic Maze Generation
+
+```python
+from maze import MazeConfig, MazeGenerator
+
+# Create a maze configuration
+config = MazeConfig(
+    WIDTH=20,
+    HEIGHT=20,
+    ENTRY=(0, 0),
+    EXIT=(19, 19),
+    OUTPUT_FILE="my_maze.txt",
+    PERFECT=True,
+    SEED=42  # Optional: for reproducible generation
+)
+
+# Generate the maze
+maze = MazeGenerator(config)
+
+# Access the maze structure
+maze_grid = maze.maze  # List[List[Cell]]
+solution = maze.solution  # Solution path string (e.g., "EESSWWN...")
+```
+
+#### Using Configuration Files
+
+```python
+from parser_config import Data, lector
+from maze import MazeGenerator
+
+# Parse configuration file
+parsed_data = Data.model_validate(lector("config.txt"))
+
+# Generate maze from parsed config
+config = parsed_data.to_maze_config()
+maze = MazeGenerator(config)
+
+# Check if solution exists
+if maze.solution:
+    print(f"Solution: {maze.solution}")
+```
+
+### Core Classes
+
+#### `MazeConfig`
+
+Configuration dataclass with built-in validation.
+
+**Parameters:**
+- `WIDTH` (int): Maze width in cells (1-100)
+- `HEIGHT` (int): Maze height in cells (1-100)
+- `ENTRY` (tuple[int, int]): Entry coordinates (x, y)
+- `EXIT` (tuple[int, int]): Exit coordinates (x, y)
+- `OUTPUT_FILE` (str): Path for output file
+- `PERFECT` (bool): Generate perfect maze (single solution) or imperfect (multiple solutions)
+- `SEED` (int, optional): Random seed for reproducibility
+
+**Example:**
+```python
+from maze import MazeConfig
+
+config = MazeConfig(
+    WIDTH=30,
+    HEIGHT=30,
+    ENTRY=(0, 0),
+    EXIT=(29, 29),
+    OUTPUT_FILE="maze.txt",
+    PERFECT=False,
+    SEED=12345
+)
+```
+
+#### `MazeGenerator`
+
+Main class for maze generation and solving.
+
+**Methods:**
+- `__init__(config: MazeConfig)` - Initialize and generate maze
+- `maze` (property) - Returns the generated maze grid (List[List[Cell]])
+- `solution` (property) - Returns the solution path as a string of directions (N/E/S/W)
+
+**Attributes:**
+- `config` - The MazeConfig used for generation
+- `WIDTH`, `HEIGHT` - Maze dimensions
+- `entry`, `exit` - Entry and exit coordinates
+
+**Example:**
+```python
+from maze import MazeConfig, MazeGenerator
+
+config = MazeConfig(WIDTH=50, HEIGHT=50, ENTRY=(0, 0), EXIT=(49, 49), 
+                   OUTPUT_FILE="maze.txt", PERFECT=True)
+
+maze_gen = MazeGenerator(config)
+
+# Access the grid
+for row in maze_gen.maze:
+    for cell in row:
+        print(f"Cell walls: N={cell.walls.north}, E={cell.walls.east}, "
+              f"S={cell.walls.south}, W={cell.walls.west}")
+
+# Get solution path
+print(f"Solution: {maze_gen.solution}")
+```
+
+#### `Cell`
+
+Represents a single maze cell with wall configuration.
+
+**Attributes:**
+- `walls` (Wall) - Wall state for all four directions
+- `visited` (bool) - Whether cell was visited during generation
+- `cell_type` (CellType) - Type of cell (NORMAL, ENTRY, EXIT, PATTERN)
+
+**Wall Access:**
+```python
+cell = maze_gen.maze[0][0]
+print(cell.walls.north)  # bool: True if wall exists
+print(cell.walls.east)   # bool: True if wall exists
+print(cell.walls.south)  # bool: True if wall exists
+print(cell.walls.west)   # bool: True if wall exists
+```
+
+#### `Wall`
+
+Represents walls and their state.
+
+**Properties:**
+- `north`, `east`, `south`, `west` (bool) - Wall open/closed status
+
+### Module Structure
+
+```
+maze/
+├── __init__.py           # Public API exports
+├── config.py             # MazeConfig dataclass
+├── cell.py               # Cell and Wall classes
+├── enums.py              # CellType enumeration
+├── maze_generator.py     # MazeGenerator class
+└── maze_miner.py         # Multi-agent mining implementation
+```
+
+### Advanced Module Usage
+
+#### Custom Pathfinding
+
+```python
+from maze import MazeConfig, MazeGenerator
+from algoritm import found_weight
+
+config = MazeConfig(WIDTH=50, HEIGHT=50, ENTRY=(0, 0), EXIT=(49, 49),
+                   OUTPUT_FILE="maze.txt", PERFECT=True)
+
+maze = MazeGenerator(config)
+
+# Use heuristic pathfinding
+solver = found_weight(entry=config.ENTRY, exits=config.EXIT, maps=maze.maze)
+all_paths = list(solver["algoritm"]())  # Generate all solutions
+best_path = solver["sorter"]()  # Get optimal path
+
+print(f"Found {len(all_paths)} solution(s)")
+print(f"Best path: {best_path}")
+```
+
+#### Reproducible Generation
+
+```python
+from maze import MazeConfig, MazeGenerator
+
+# Use same seed to get identical maze
+config1 = MazeConfig(WIDTH=30, HEIGHT=30, ENTRY=(0, 0), EXIT=(29, 29),
+                    OUTPUT_FILE="maze1.txt", PERFECT=True, SEED=42)
+maze1 = MazeGenerator(config1)
+
+config2 = MazeConfig(WIDTH=30, HEIGHT=30, ENTRY=(0, 0), EXIT=(29, 29),
+                    OUTPUT_FILE="maze2.txt", PERFECT=True, SEED=42)
+maze2 = MazeGenerator(config2)
+
+# maze1.solution == maze2.solution (identical results)
+assert maze1.solution == maze2.solution
+```
+
+#### Batch Generation
+
+```python
+from maze import MazeConfig, MazeGenerator
+
+for size in [10, 20, 30, 50, 100]:
+    config = MazeConfig(
+        WIDTH=size,
+        HEIGHT=size,
+        ENTRY=(0, 0),
+        EXIT=(size-1, size-1),
+        OUTPUT_FILE=f"maze_{size}x{size}.txt",
+        PERFECT=True,
+        SEED=42
+    )
+    maze = MazeGenerator(config)
+    print(f"{size}x{size}: Solution length = {len(maze.solution)}")
+```
+
+### Type Safety
+
+The module is fully type-hinted and compatible with mypy strict mode:
+
+```bash
+# Type check
+mypy --strict maze/
+
+# IDE autocomplete and type hints fully supported
+```
+
+### Module Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| pydantic | ≥2.0 | Configuration validation and parsing |
+| numpy | ≥1.20 | Numerical operations (distance calculations) |
+
 ## Reusable Components
 
 ### 1. Core Maze Generation (`maze/` module)
