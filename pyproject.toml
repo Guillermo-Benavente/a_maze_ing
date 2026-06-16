@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "mazegen"
 version = "1.0.0"
 description = "A-Maze-ing: Maze generation and visualization engine with multi-agent parallel mining algorithm"
-readme = "README.md"
+readme = {file = "maze/README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
@@ -46,9 +46,10 @@ Issues = "https://github.com/Guillermo-Benavente/a_maze_ing/issues"
 
 [tool.setuptools]
 packages = ["maze"]
+include-package-data = true
 
 [tool.setuptools.package-data]
-maze = ["py.typed"]
+maze = ["py.typed", "README.md"]
 maze_3d = ["py.typed"]
 
 [tool.mypy]
